@@ -114,8 +114,6 @@
 // DEBUG SETTINGS
 // =============================================================================
 
-#define DEBUG_MODE           false  // Set true to enable telemetry printing
 #define VERBOSE_LOGGING      false
-#define TELEMETRY_PRINT_INTERVAL_MS  10000  // Print telemetry every 10 seconds (if DEBUG_MODE)
 
 #endif // CONFIG_H

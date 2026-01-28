@@ -16,7 +16,6 @@
 #include "config.h"           // Central configuration
 #include "sdkconfig.h"        // Bluepad32 configuration
 #include "motor_controller.h" // Motor control
-#include "telemetry.h"        // Battery, CPU temp
 #include "wifi_ap.h"          // WiFi access point
 #include "web_server.h"       // HTTP dashboard
 
@@ -318,29 +317,6 @@ static const char* dpad_to_string(uint8_t dpad) {
  */
 static void my_platform_on_controller_data(uni_hid_device_t* d, uni_controller_t* ctl) {
     static uni_controller_t prev = {0};
-    static uint32_t last_telemetry_update = 0;
-    static uint32_t last_telemetry_print = 0;
-
-    // Update telemetry periodically (not every frame)
-    uint32_t now = to_ms_since_boot(get_absolute_time());
-    if (now - last_telemetry_update > 100) {  // 10Hz
-        telemetry_update(0);
-        last_telemetry_update = now;
-
-        // Check for critical battery
-        if (ENABLE_LOW_BATTERY_CUTOFF && telemetry_is_battery_critical()) {
-            if (g_motors_initialized && !g_motors.failsafe_triggered) {
-                printf("\n!!! CRITICAL BATTERY - EMERGENCY STOP !!!\n");
-                motor_controller_stop_all(&g_motors);
-            }
-        }
-    }
-
-    // Print telemetry summary periodically
-    if (DEBUG_MODE && (now - last_telemetry_print > TELEMETRY_PRINT_INTERVAL_MS)) {
-        telemetry_print_summary();
-        last_telemetry_print = now;
-    }
 
     // Check arming countdown (runs even when no input changes)
     check_arming_countdown();

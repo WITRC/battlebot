@@ -10,7 +10,6 @@
 
 #include "config.h"            // Central configuration
 #include "sdkconfig.h"         // Bluepad32 configuration
-#include "telemetry.h"         // Battery, CPU temp monitoring
 #include "wifi_ap.h"           // WiFi access point
 
 // Verify we're using custom platform mode (required for Pico W)
@@ -28,7 +27,6 @@ struct uni_platform* get_my_platform(void);
  * 1. stdio_init_all() - USB serial for printf
  * 2. cyw43_arch_init() - Initialize WiFi/BT chip
  * 3. wifi_ap_init() - Start WiFi access point
- * 4. telemetry_init() - Start battery/temp monitoring
  * 5. uni_platform_set_custom() - Register Bluepad32 callbacks
  * 6. uni_init() - Initialize Bluepad32
  * 7. btstack_run_loop_execute() - Start event loop (never returns)
@@ -60,17 +58,6 @@ int main() {
 
     // Turn on LED while setting up
     cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);
-
-    // Start WiFi access point
-    printf("\n");
-    if (!wifi_ap_init()) {
-        printf("WARNING: WiFi AP failed to start\n");
-        // Continue anyway - Bluetooth control will still work
-    }
-
-    // Initialize telemetry (battery monitoring, CPU temp)
-    printf("\n");
-    telemetry_init();
 
     // Register our custom platform callbacks with Bluepad32
     printf("\n");
