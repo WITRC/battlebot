@@ -3,4 +3,4 @@
 	url = https://github.com/ricardoquesada/bluepad32.git
 [submodule "pico-sdk"]
 	path = pico-sdk
-	url = git@github.com:raspberrypi/pico-sdk.git
+	url = https://github.com/raspberrypi/pico-sdk.git
