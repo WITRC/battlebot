@@ -55,8 +55,8 @@ Set-Location "build"
 # Use Ninja if available, otherwise use standard CMake
 if (Get-Command "ninja" -ErrorAction SilentlyContinue) {
     Write-Host "Building with Ninja..."
-    cmake -G Ninja ..
-    ninja -j $jobs
+    cmake -S . -B build -G Ninja
+    cmake --build build
 } else {
     Write-Host "Building with CMake..."
     cmake -G "MinGW Makefiles" ..
