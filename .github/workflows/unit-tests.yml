@@ -1,0 +1,32 @@
+name: Unit Tests
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Run Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential
+
+    - name: Build and run tests
+      run: |
+        cd tests
+        mkdir build
+        cd build
+        cmake ..
+        make -j$(nproc)
+        ./motor_tests
