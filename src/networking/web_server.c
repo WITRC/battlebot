@@ -4,7 +4,6 @@
 // =============================================================================
 
 #include "web_server.h"
-#include "telemetry.h"
 #include "wifi_ap.h"
 #include <stdio.h>
 #include <string.h>
@@ -30,8 +29,6 @@ static void http_close(struct tcp_pcb* tpcb);
 // =============================================================================
 
 static int generate_status_page(char* buffer, int max_len) {
-    telemetry_data_t* tel = telemetry_get_data();
-
     int left = 0, right = 0, weapon = 0;
     bool armed = false;
     if (g_motors) {
@@ -98,13 +95,7 @@ static int generate_status_page(char* buffer, int max_len) {
         ROBOT_NAME,  // <h1>
         armed ? "armed" : "safe",
         armed ? "ARMED" : "SAFE",
-        left, right, weapon,
-        tel->battery_critical ? "crit" : (tel->battery_low ? "warn" : ""),
-        tel->battery_voltage,
-        tel->battery_percent,
-        tel->battery_percent,
-        tel->cpu_temp_c,
-        tel->uptime_ms / 1000
+        left, right, weapon
     );
 
     return len;

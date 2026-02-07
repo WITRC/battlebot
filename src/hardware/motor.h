@@ -8,7 +8,12 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "pico/stdlib.h"  // For uint and Pico types
+
+#ifndef UNIT_TESTING
+    #include "pico/stdlib.h"  // For uint and Pico types
+#else
+    typedef unsigned int uint;
+#endif
 
 // Default ESC timing (microseconds)
 #define ESC_DEFAULT_MIN_US   1000  // Full reverse / idle

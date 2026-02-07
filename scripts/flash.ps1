@@ -3,7 +3,7 @@
 # Navigate to script directory
 Set-Location $PSScriptRoot
 
-$uf2File = "build\monster_book.uf2"
+$uf2File = "..\build\monster_book.uf2"
 
 # Check if UF2 file exists
 if (-not (Test-Path $uf2File)) {

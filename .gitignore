@@ -87,3 +87,4 @@ config/secrets.yaml
 
 # Secrets (encrypted version committed as secrets.h.age)
 src/config/secrets.h
+build_tests/
