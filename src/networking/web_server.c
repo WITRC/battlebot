@@ -29,76 +29,61 @@ static void http_close(struct tcp_pcb* tpcb);
 // =============================================================================
 
 static int generate_status_page(char* buffer, int max_len) {
-    int left = 0, right = 0, weapon = 0;
-    bool armed = false;
-    if (g_motors) {
+    // default values
+    int left = -999, right = -999, weapon = -999;
+    bool armed = true;
+    float voltage = -999.0f;
+    int battery_percent = -999;
+    float temp = -999.0f;
+
+    // get motor data
+    if (g_motors != NULL) {
         motor_controller_get_status(g_motors, &left, &right, &weapon, &armed);
+        left = g_motors->left_speed;
+        right = g_motors->right_speed;
+        weapon = g_motors->weapon_speed;
+
+        armed = g_motors->weapon_armed;
     }
 
-    // Generate HTML
-    int len = snprintf(buffer, max_len,
+    // response template
+    return snprintf(buffer, max_len,
         "HTTP/1.1 200 OK\r\n"
         "Content-Type: text/html\r\n"
         "Connection: close\r\n"
-        "Refresh: 2\r\n"  // Auto-refresh every 2 seconds
+        "Refresh: 2\r\n"
         "\r\n"
-        "<!DOCTYPE html>"
-        "<html><head>"
+        "<!DOCTYPE html><html><head>"
         "<meta name='viewport' content='width=device-width,initial-scale=1'>"
-        "<title>%s</title>"
         "<style>"
-        "body{font-family:monospace;background:#1a1a2e;color:#eee;padding:20px;}"
-        "h1{color:#e94560;}"
-        ".box{background:#16213e;padding:15px;margin:10px 0;border-radius:8px;}"
-        ".label{color:#888;}"
-        ".value{font-size:1.5em;}"
-        ".armed{color:#ff4444;font-weight:bold;}"
-        ".safe{color:#44ff44;}"
-        ".warn{color:#ffaa00;}"
-        ".crit{color:#ff0000;}"
-        ".bar{background:#333;height:20px;border-radius:4px;overflow:hidden;}"
-        ".bar-fill{background:#e94560;height:100%%;}"
-        "</style>"
-        "</head><body>"
+        "body{font-family:monospace;background:#1a1a2e;color:#eee;padding:20px;text-align:center;}"
+        ".box{background:#16213e;padding:15px;margin:10px auto;border-radius:8px;max-width:400px;border:1px solid #e94560;}"
+        ".armed{color:#ff4444;font-weight:bold;font-size:1.5em;}"
+        ".safe{color:#44ff44;font-weight:bold;font-size:1.5em;}"
+        "</style></head><body>"
         "<h1>%s</h1>"
-
         "<div class='box'>"
-        "<div class='label'>WEAPON STATUS</div>"
-        "<div class='value %s'>%s</div>"
+        "<div>STATUS</div>"
+        "<div class='%s'>%s</div>"
         "</div>"
-
         "<div class='box'>"
-        "<div class='label'>Motors</div>"
-        "<div>Left: %+d%% | Right: %+d%% | Weapon: %d%%</div>"
+        "<div>MOTORS</div>"
+        "<div>L: %+d%% | R: %+d%%</div>"
+        "<div>WEAPON: %d%%</div>"
         "</div>"
-
         "<div class='box'>"
-        "<div class='label'>Battery</div>"
-        "<div class='value %s'>%.2fV (%d%%)</div>"
-        "<div class='bar'><div class='bar-fill' style='width:%d%%;'></div></div>"
+        "<div>SYSTEM</div>"
+        "<div>Battery: %.2fV (%d%%)</div>"
+        "<div>Temp: %.1f&deg;C</div>"
         "</div>"
-
-        "<div class='box'>"
-        "<div class='label'>CPU Temperature</div>"
-        "<div class='value'>%.1f&deg;C</div>"
-        "</div>"
-
-        "<div class='box'>"
-        "<div class='label'>Uptime</div>"
-        "<div>%lu seconds</div>"
-        "</div>"
-
-        "<p style='color:#666;'>Auto-refresh every 2 seconds</p>"
         "</body></html>",
-
-        ROBOT_NAME,  // <title>
-        ROBOT_NAME,  // <h1>
-        armed ? "armed" : "safe",
-        armed ? "ARMED" : "SAFE",
-        left, right, weapon
+        ROBOT_NAME,                            // %s (H1)
+        armed ? "armed" : "safe",              // %s (CSS class)
+        armed ? "SYSTEM ARMED" : "SYSTEM SAFE",// %s (Status text)
+        left, right, weapon,                   // %d, %d, %d
+        voltage, battery_percent,              // %.2f, %d
+        temp                                   // %.1f
     );
-
-    return len;
 }
 
 static int generate_404(char* buffer, int max_len) {
@@ -117,31 +102,30 @@ static int generate_404(char* buffer, int max_len) {
 
 static err_t http_recv(void* arg, struct tcp_pcb* tpcb, struct pbuf* p, err_t err) {
     if (p == NULL) {
-        // Connection closed by client
         http_close(tpcb);
         return ERR_OK;
     }
 
-    // Get request data
-    char* request = (char*)p->payload;
+    printf("Web Server: Request received! Size: %d bytes\n", p->tot_len);
 
-    // Parse HTTP request (very basic)
-    int response_len = 0;
-    if (strncmp(request, "GET / ", 6) == 0 ||
-        strncmp(request, "GET /index", 10) == 0) {
-        response_len = generate_status_page(g_response_buffer, RESPONSE_BUFFER_SIZE);
-    } else {
-        response_len = generate_404(g_response_buffer, RESPONSE_BUFFER_SIZE);
+    // Tell lwIP we processed the data
+    tcp_recved(tpcb, p->tot_len);
+
+    // Generate the page
+    int response_len = generate_status_page(g_response_buffer, RESPONSE_BUFFER_SIZE);
+
+    // Write and Force Push
+    err_t write_err = tcp_write(tpcb, g_response_buffer, response_len, TCP_WRITE_FLAG_COPY);
+    if (write_err != ERR_OK) {
+        printf("Web Server: tcp_write failed with error %d\n", write_err);
     }
-
-    // Send response
-    tcp_write(tpcb, g_response_buffer, response_len, TCP_WRITE_FLAG_COPY);
+    
     tcp_output(tpcb);
 
-    // Free the pbuf
     pbuf_free(p);
-
-    // Close connection after response
+    
+    // Note: If the page is very simple, we close immediately. 
+    // If it's complex, we'd wait for the sentinel callback.
     http_close(tpcb);
 
     return ERR_OK;

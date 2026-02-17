@@ -26,7 +26,6 @@ add_executable(${PROJECT_NAME}
     src/hardware/motor_controller.c
     src/networking/wifi_ap.c
     src/networking/web_server.c
-    src/networking/dhcpserver/dhcpserver.c
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
@@ -34,7 +33,6 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     src/config
     src/hardware
     src/networking
-    src/networking/dhcpserver
     src/bluetooth
     ${BLUEPAD32_ROOT}/src/components/bluepad32/include
 )
