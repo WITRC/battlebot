@@ -35,20 +35,7 @@
 // ESC PWM Configuration (50Hz servo-style)
 #define MOTOR_PWM_FREQ      50      // Hz
 
-// ESC Pulse Width Timing (microseconds)
-#define DRIVE_MIN_US        1000    // Full reverse / idle
-#define DRIVE_MID_US        1500    // Stopped (for bidirectional)
-#define DRIVE_MAX_US        2000    // Full forward
-#define WEAPON_MIN_US       1000
-#define WEAPON_MID_US       1500
-#define WEAPON_MAX_US       2000
-
-#define ARM_SEQUENCE_ONE    1480
-#define ARM_SEQUENCE_ONE_DELAY  4000
-
 // Motor Behavior
-#define MOTOR_BIDIRECTIONAL true   // Try unidirectional arming
-#define MOTOR_INVERT_SIGNAL false   // No inverting transistor on GPIO 0
 #define MOTOR_MAX_SPEED     100     // Maximum speed percentage
 #define MOTOR_DEADBAND      10      // Ignore inputs below this %
 
@@ -56,9 +43,12 @@
 // SAFETY SETTINGS
 // =============================================================================
 
-// Failsafe - stops motors if no controller input
-#define FAILSAFE_ENABLED     true
-#define FAILSAFE_TIMEOUT_MS  500    // Stop if no command for this long
+#define FAILSAFE_ENABLED    true
+#define FAILSAFE_TIMEOUT_MS 2000    // Time without commands before triggering failsafe
+
+// Safety limits (absolute min/max to prevent ESC damage)
+#define ESC_ABS_MIN_US      900
+#define ESC_ABS_MAX_US      2100
 
 // Low battery cutoff (disable if no battery sensor connected)
 #define ENABLE_LOW_BATTERY_CUTOFF  false

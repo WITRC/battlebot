@@ -32,7 +32,7 @@ static int generate_status_page(char* buffer, int max_len) {
     int left = 0, right = 0, weapon = 0;
     bool armed = false;
     if (g_motors) {
-        motor_controller_get_status(g_motors, &left, &right, &weapon, &armed);
+        motor_controller_get_status(g_motors, &left, &right, &weapon);
     }
 
     // Generate HTML

@@ -27,6 +27,7 @@ add_executable(${PROJECT_NAME}
     src/networking/wifi_ap.c
     src/networking/web_server.c
     src/networking/dhcpserver/dhcpserver.c
+        src/hardware/utility.h
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE

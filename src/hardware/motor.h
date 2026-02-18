@@ -12,18 +12,14 @@
 #ifndef UNIT_TESTING
     #include "pico/stdlib.h"  // For uint and Pico types
 #else
-    typedef unsigned int uint;
 #endif
 
-// Default ESC timing (microseconds)
-#define ESC_DEFAULT_MIN_US   1000  // Full reverse / idle
-#define ESC_DEFAULT_MID_US   1500  // Stopped (for bidirectional ESCs)
-#define ESC_DEFAULT_MAX_US   2000  // Full forward
-#define ESC_DEFAULT_FREQ_HZ  50    // Standard servo/ESC frequency
-
-// Safety limits (absolute min/max to prevent ESC damage)
-#define ESC_ABS_MIN_US  900
-#define ESC_ABS_MAX_US  2100
+// PWM configuration for 50Hz operation
+// Pico runs at 125MHz by default
+// For 50Hz with good resolution: 125MHz / (wrap * divider) = 50Hz
+// Using wrap=20000 and divider=125 gives exactly 50Hz with 1us resolution
+#define PWM_WRAP     20000  // 20ms period = 50Hz
+#define PWM_DIVIDER  150.0f // Clock divider
 
 // Motor instance structure
 typedef struct {
@@ -31,11 +27,15 @@ typedef struct {
     uint slice_num;          // PWM slice number (derived from pin)
     uint channel;            // PWM channel (A or B)
     uint16_t min_us;         // Minimum pulse width (microseconds)
-    uint16_t mid_us;         // Middle pulse width (stopped)
     uint16_t max_us;         // Maximum pulse width (microseconds)
-    float last_throttle;     // Last set throttle value (0.0 - 1.0)
-    bool armed;              // Whether motor is armed
+    bool bidirectional;      // True if ESC supports reverse (uses mid_us as stop)
 } motor_t;
+
+#define WHEEL_MOTOR_MIN_US 1000
+#define WHEEL_MOTOR_MAX_US 2000
+
+#define WEAPON_MOTOR_MIN_US 1500
+#define WEAPON_MOTOR_MAX_US 2000
 
 /**
  * Initialize a motor on the specified GPIO pin.
@@ -44,63 +44,25 @@ typedef struct {
  * @param motor     Pointer to motor structure to initialize
  * @param gpio_pin  GPIO pin connected to ESC signal wire
  * @param min_us    Minimum pulse width in microseconds (default: 1000)
- * @param mid_us    Middle pulse width in microseconds (default: 1500)
  * @param max_us    Maximum pulse width in microseconds (default: 2000)
  */
-void motor_init(motor_t* motor, uint gpio_pin, uint16_t min_us, uint16_t mid_us, uint16_t max_us);
 
-/**
- * Initialize motor with default timing (1000/1500/2000 microseconds).
- */
-void motor_init_default(motor_t* motor, uint gpio_pin);
+void get_wheel_motor(motor_t* m, uint pin);
 
-/**
- * Set raw pulse width in microseconds.
- * Clamped to safety limits (ESC_ABS_MIN_US to ESC_ABS_MAX_US).
- *
- * @param motor  Motor to control
- * @param us     Pulse width in microseconds
- */
-void motor_set_pulse_us(motor_t* motor, uint16_t us);
-
-/**
- * Set throttle as a value from 0.0 to 1.0.
- * Maps linearly from min_us to max_us.
- *
- * @param motor    Motor to control
- * @param throttle Throttle value (0.0 = min_us, 1.0 = max_us)
- */
-void motor_set_throttle(motor_t* motor, float throttle);
+void get_weapon_motor(motor_t* m, uint pin);
 
 /**
  * Set speed as a value from -100 to 100.
  * For bidirectional ESCs: -100 = full reverse, 0 = stop, 100 = full forward
  * For unidirectional ESCs: Uses absolute value (0-100 range)
  *
- * @param motor         Motor to control
+ * @param m         Motor to control
  * @param speed         Speed value (-100 to 100)
- * @param bidirectional True if ESC supports reverse
  */
-void motor_set_speed(motor_t* motor, int speed, bool bidirectional);
+void motor_set_speed(motor_t* m, int speed);
 
 /**
  * Stop motor immediately (sets to min_us for unidirectional, mid_us for bidirectional).
  */
-void motor_stop(motor_t* motor, bool bidirectional);
-
-/**
- * Arm the motor (allows throttle commands to take effect).
- */
-void motor_arm(motor_t* motor);
-
-/**
- * Disarm the motor and stop it.
- */
-void motor_disarm(motor_t* motor);
-
-/**
- * Check if motor is armed.
- */
-bool motor_is_armed(motor_t* motor);
-
+void motor_stop(motor_t* motor);
 #endif // MOTOR_H
