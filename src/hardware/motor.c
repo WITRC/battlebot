@@ -5,10 +5,16 @@
 
 #include "motor.h"
 #include "config.h"
-#include <stdio.h>
-#include "hardware/pwm.h"
-#include "hardware/clocks.h"
-#include "hardware/gpio.h"
+
+#ifdef UNIT_TESTING
+    #include "mock_pico_hardware.h"
+    #define printf(...) ((void)0)  // Silent printf in tests
+#else
+    #include <stdio.h>
+    #include "hardware/pwm.h"
+    #include "hardware/clocks.h"
+    #include "hardware/gpio.h"
+#endif
 
 // PWM configuration for 50Hz operation
 // Pico runs at 125MHz by default

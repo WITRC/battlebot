@@ -46,17 +46,18 @@ $totalCores = (Get-CimInstance -ClassName Win32_ComputerSystem).NumberOfLogicalP
 $jobs = if ($totalCores -gt 2) { $totalCores - 2 } else { 1 }
 
 # Clean and create build directory
-if (Test-Path "build") {
-    Remove-Item -Recurse -Force "build"
+if (Test-Path "../build") {
+    Remove-Item -Recurse -Force "../build"
 }
-New-Item -ItemType Directory -Path "build" | Out-Null
-Set-Location "build"
+New-Item -ItemType Directory -Path "../build" | Out-Null
+Set-Location "../build"
 
 # Use Ninja if available, otherwise use standard CMake
 if (Get-Command "ninja" -ErrorAction SilentlyContinue) {
     Write-Host "Building with Ninja..."
-    cmake -G Ninja ..
-    ninja -j $jobs
+cmake -S .. -B . -G Ninja
+cmake --build . -j $jobs
+
 } else {
     Write-Host "Building with CMake..."
     cmake -G "MinGW Makefiles" ..

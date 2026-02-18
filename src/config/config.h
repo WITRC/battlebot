@@ -19,10 +19,8 @@
 // =============================================================================
 
 // ESC Motor Pins (PWM signal to ESC)
-#define PIN_MOTOR_LEFT_FRONT   0   // GP0 - Left front drive motor
-#define PIN_MOTOR_RIGHT_FRONT  1   // GP1 - Right front drive motor
-#define PIN_MOTOR_LEFT_BACK    2   // GP2 - Left back drive motor
-#define PIN_MOTOR_RIGHT_BACK   3   // GP3 - Right back drive motor
+#define PIN_MOTOR_LEFT         0   // GP0 - Left drive motor
+#define PIN_MOTOR_RIGHT        1   // GP1 - Right drive motor
 #define PIN_WEAPON             4   // GP4 - Weapon motor
 
 // Analog Inputs
@@ -112,8 +110,6 @@
 // DEBUG SETTINGS
 // =============================================================================
 
-#define DEBUG_MODE           false  // Set true to enable telemetry printing
 #define VERBOSE_LOGGING      false
-#define TELEMETRY_PRINT_INTERVAL_MS  10000  // Print telemetry every 10 seconds (if DEBUG_MODE)
 
 #endif // CONFIG_H

@@ -1,29 +1,26 @@
-# Windows flash script for robotics project
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
 
-# Navigate to script directory
 Set-Location $PSScriptRoot
 
-$uf2File = "build\monster_book.uf2"
+$repoRoot = Resolve-Path (Join-Path $PSScriptRoot '..')
+$uf2File  = Join-Path $repoRoot 'build\monster_book.uf2'
 
-# Check if UF2 file exists
+Write-Host "UF2 file expected at: $uf2File"
 if (-not (Test-Path $uf2File)) {
-    Write-Error "Error: $uf2File not found. Run .\build.ps1 first."
-    exit 1
+    throw "UF2 not found. Build first: .\build.bat"
 }
 
-# Find Pico volume (RPI-RP2 or similar)
-$picoDrives = Get-WmiObject Win32_LogicalDisk | Where-Object { 
-    $_.VolumeName -match 'RPI-RP2' -or $_.VolumeName -match 'RP2350'
-}
+$picoDrive = (Get-CimInstance Win32_LogicalDisk |
+    Where-Object { $_.VolumeName -in @('RPI-RP2','RP2350') } |
+    Select-Object -First 1 -ExpandProperty DeviceID)
 
-if (-not $picoDrives) {
-    Write-Error "Error: Pico not found. Hold BOOTSEL button and plug in USB."
-    exit 1
+if (-not $picoDrive) {
+    throw "Pico not found. Hold BOOTSEL and plug in USB; it should mount as RPI-RP2."
 }
-
-# Use the first matching drive
-$picoDrive = $picoDrives[0].DeviceID
 
 Write-Host "Copying to $picoDrive..."
-Copy-Item $uf2File "$picoDrive\"
+$dest = Join-Path "$picoDrive\" (Split-Path $uf2File -Leaf)
+Copy-Item -LiteralPath $uf2File -Destination $dest -Force
+
 Write-Host "Done! Pico will reboot automatically."

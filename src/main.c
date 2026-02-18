@@ -10,8 +10,8 @@
 
 #include "config.h"            // Central configuration
 #include "sdkconfig.h"         // Bluepad32 configuration
-#include "telemetry.h"         // Battery, CPU temp monitoring
 #include "wifi_ap.h"           // WiFi access point
+#include "web_server.h"
 
 // Verify we're using custom platform mode (required for Pico W)
 #ifndef CONFIG_BLUEPAD32_PLATFORM_CUSTOM
@@ -21,6 +21,14 @@
 // Forward declaration - implemented in my_platform.c
 struct uni_platform* get_my_platform(void);
 
+static struct repeating_timer lwip_timer;
+
+static bool lwip_poll_timer(struct repeating_timer *t) {
+    cyw43_arch_poll();
+    return true;
+}
+
+
 /**
  * Main entry point
  *
@@ -28,7 +36,6 @@ struct uni_platform* get_my_platform(void);
  * 1. stdio_init_all() - USB serial for printf
  * 2. cyw43_arch_init() - Initialize WiFi/BT chip
  * 3. wifi_ap_init() - Start WiFi access point
- * 4. telemetry_init() - Start battery/temp monitoring
  * 5. uni_platform_set_custom() - Register Bluepad32 callbacks
  * 6. uni_init() - Initialize Bluepad32
  * 7. btstack_run_loop_execute() - Start event loop (never returns)
@@ -56,21 +63,12 @@ int main() {
         printf("FATAL: Failed to initialize CYW43!\n");
         return -1;
     }
+
     printf("CYW43 ready\n");
 
     // Turn on LED while setting up
     cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);
 
-    // Start WiFi access point
-    printf("\n");
-    if (!wifi_ap_init()) {
-        printf("WARNING: WiFi AP failed to start\n");
-        // Continue anyway - Bluetooth control will still work
-    }
-
-    // Initialize telemetry (battery monitoring, CPU temp)
-    printf("\n");
-    telemetry_init();
 
     // Register our custom platform callbacks with Bluepad32
     printf("\n");
@@ -79,6 +77,9 @@ int main() {
 
     // Initialize Bluepad32 library
     uni_init(0, NULL);
+
+    // lwip polling (for webserver)
+    add_repeating_timer_ms(10, lwip_poll_timer, NULL, &lwip_timer);
 
     // Start the BTstack event loop
     // This handles all Bluetooth communication and NEVER RETURNS
@@ -90,3 +91,5 @@ int main() {
     // We never get here
     return 0;
 }
+
+
