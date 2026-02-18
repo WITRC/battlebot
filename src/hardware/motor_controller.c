@@ -6,14 +6,6 @@
 #include "motor_controller.h"
 #include <stdlib.h>
 
-#ifdef UNIT_TESTING
-    #include "mock_pico_hardware.h"
-    #define printf(...) ((void)0)  // Silent printf in tests
-#else
-    #include <stdio.h>
-    #include "pico/time.h"
-#endif
-
 // Helper: Apply deadband to eliminate stick drift
 static int apply_deadband(int value) {
     if (abs(value) < MOTOR_DEADBAND) {
