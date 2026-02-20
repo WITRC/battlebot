@@ -73,7 +73,7 @@ static void process_controller_input(uni_gamepad_t* gp) {
 
     // === WEAPON CONTROL ===
     int weapon_speed = map_range_int(gp->throttle, 0, TRIGGER_MAX, 0, 100);
-    motor_controller_set(&motor_ctrl.weapon, &motor_ctrl.weapon_speed, weapon_speed);
+    motor_controller_weapon(&motor_ctrl, weapon_speed);
 }
 
 // =============================================================================
@@ -101,7 +101,7 @@ static void my_platform_on_init_complete(void) {
 
     motor_controller_init(&motor_ctrl);
     web_server_init(&motor_ctrl);
-    motor_ctrl.state = active; // Start in "off" state until controller is connected
+    motor_ctrl.state = stopped; // Start in "off" state until controller is connected
 
     printf("\n");
     printf("Controls (Tank Drive):\n");
@@ -146,7 +146,7 @@ static uni_error_t my_platform_on_device_discovered(bd_addr_t addr, const char* 
  */
 static void my_platform_on_device_connected(uni_hid_device_t* d) {
     printf("Controller connected!\n");
-    motor_ctrl.state = active; // Set to "on" state when controller connects
+    motor_ctrl.state = stopped; // Set to "on" state when controller connects
     uni_bt_stop_scanning_safe();
     cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);     // LED on = controller connected
 }

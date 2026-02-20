@@ -19,9 +19,11 @@
 // =============================================================================
 
 // ESC Motor Pins (PWM signal to ESC)
-#define PIN_MOTOR_LEFT         0   // GP0 - Left drive motor
-#define PIN_MOTOR_RIGHT        1   // GP1 - Right drive motor
-#define PIN_WEAPON             2   // GP2 - Weapon motor
+#define PIN_MOTOR_TRH_LEFT         0   // GP0 - Left drive motor
+#define PIN_MOTOR_REV_LEFT         1   // GP0 - Left drive motor
+#define PIN_MOTOR_TRH_RIGHT         2   // GP0 - Left drive motor
+#define PIN_MOTOR_REV_RIGHT        3   // GP0 - Left drive motor
+#define PIN_WEAPON             4   // GP2 - Weapon motor
 
 // Analog Inputs
 #define PIN_BATTERY_ADC  26  // ADC0 - Battery voltage divider

@@ -8,8 +8,9 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "config.h"  // All settings centralized
 #include "motor.h"
+#include "motor_bi.h"
+#include "motor_omni.h"
 
 // =============================================================================
 // MOTOR CONTROLLER API
@@ -20,9 +21,9 @@ typedef enum {initializing, active, stopped} p_state;
 
 // Motor controller state
 typedef struct {
-    motor_t motor_left;
-    motor_t motor_right;
-    motor_t weapon;
+    motor_bi_t motor_left;
+    motor_bi_t motor_right;
+    motor_omni_t weapon;
 
     // Current speeds (-100 to 100 for drive, 0 to 100 for weapon)
     int left_speed;
@@ -44,6 +45,7 @@ typedef struct {
 void motor_controller_init(motor_controller_t* mc);
 
 void motor_controller_tank_drive(motor_controller_t* mc, int left, int right);
+void motor_controller_weapon(motor_controller_t* mc, int weapon);
 
 void motor_controller_set(motor_t* m, int* cSpeed, int speed);
 

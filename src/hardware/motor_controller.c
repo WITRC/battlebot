@@ -7,6 +7,8 @@
 #include <stdio.h>
 
 #include "motor.h"
+#include "motor_bi.h"
+#include "motor_omni.h"
 #include "utility.h"
 #include "pico/time.h"
 
@@ -25,10 +27,13 @@ static void update_command_time(motor_controller_t* mc) {
 void motor_controller_init(motor_controller_t* mc) {
     printf("Initializing motor controller...\n");
 
-    // Initialize motors
-    get_wheel_motor(&mc->motor_left, PIN_MOTOR_LEFT);
-    get_wheel_motor(&mc->motor_right, PIN_MOTOR_RIGHT);
-    get_weapon_motor(&mc->weapon, PIN_WEAPON);
+    motor_bi_ctor(&mc->motor_left, PIN_MOTOR_TRH_LEFT, PIN_MOTOR_REV_LEFT);
+    motor_bi_ctor(&mc->motor_right, PIN_MOTOR_TRH_RIGHT, PIN_MOTOR_REV_RIGHT);
+    motor_omni_ctor(&mc->weapon, PIN_WEAPON);
+
+    motor_init((motor_t*)&mc->motor_left);
+    motor_init((motor_t*)&mc->motor_right);
+    motor_init((motor_t*)&mc->weapon);
 
     // Initialize state
     mc->left_speed = 0;
@@ -52,21 +57,21 @@ void motor_controller_set(motor_t* m, int* cSpeed, int speed) {
 }
 
 void motor_controller_tank_drive(motor_controller_t* mc, int left, int right) {
-    motor_controller_set(&mc->motor_left, &mc->left_speed, left);
-    motor_controller_set(&mc->motor_right, &mc->right_speed, right);
+    motor_controller_set((motor_t*)&mc->motor_left, &mc->left_speed, left);
+    motor_controller_set((motor_t*)&mc->motor_right, &mc->right_speed, right);
     update_command_time(mc);
 }
 
 void motor_controller_weapon(motor_controller_t* mc, int weapon) {
-    motor_controller_set(&mc->weapon, &mc->weapon_speed, weapon);
+    motor_controller_set((motor_t*)&mc->weapon, &mc->weapon_speed, weapon);
     update_command_time(mc);
 }
 
 
 void motor_controller_stop_all(motor_controller_t* mc) {
-    motor_stop(&mc->motor_left);
-    motor_stop(&mc->motor_right);
-    motor_stop(&mc->weapon);
+    motor_stop((motor_t*)&mc->motor_left);
+    motor_stop((motor_t*)&mc->motor_right);
+    motor_stop((motor_t*)&mc->weapon);
     mc->left_speed = 0;
     mc->right_speed = 0;
     mc->weapon_speed = 0;
