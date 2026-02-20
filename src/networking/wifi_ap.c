@@ -9,10 +9,7 @@
 #include "pico/stdlib.h"
 #include "pico/cyw43_arch.h"
 #include "lwip/netif.h"
-#include "dhcpserver.h"
 
-// DHCP server instance
-static dhcp_server_t g_dhcp_server;
 static bool g_ap_active = false;
 
 bool wifi_ap_init(void) {
@@ -47,10 +44,6 @@ bool wifi_ap_init(void) {
         nif = nif->next;
     }
 
-    // Start DHCP server
-    dhcp_server_init(&g_dhcp_server, &gw, &mask);
-    printf("  DHCP server started (listening on port 67)\n");
-
     g_ap_active = true;
 
     printf("WiFi AP ready!\n");
@@ -74,7 +67,6 @@ int wifi_ap_get_client_count(void) {
 
 void wifi_ap_stop(void) {
     if (g_ap_active) {
-        dhcp_server_deinit(&g_dhcp_server);
         cyw43_arch_disable_ap_mode();
         g_ap_active = false;
         printf("WiFi AP stopped\n");

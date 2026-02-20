@@ -10,6 +10,8 @@
 
 #include "config.h"            // Central configuration
 #include "sdkconfig.h"         // Bluepad32 configuration
+#include "wifi_ap.h"           // WiFi access point
+#include "web_server.h"
 
 // Verify we're using custom platform mode (required for Pico W)
 #ifndef CONFIG_BLUEPAD32_PLATFORM_CUSTOM
@@ -18,6 +20,14 @@
 
 // Forward declaration - implemented in my_platform.c
 struct uni_platform* get_my_platform(void);
+
+static struct repeating_timer lwip_timer;
+
+static bool lwip_poll_timer(struct repeating_timer *t) {
+    cyw43_arch_poll();
+    return true;
+}
+
 
 /**
  * Main entry point
@@ -44,10 +54,12 @@ int main() {
         printf("FATAL: Failed to initialize CYW43!\n");
         return -1;
     }
+
     printf("CYW43 ready\n");
 
     // Turn on LED while setting up
     cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);
+
 
     // Register our custom platform callbacks with Bluepad32
     printf("\n");
@@ -57,6 +69,9 @@ int main() {
     // Initialize Bluepad32 library
     uni_init(0, NULL);
 
+    // lwip polling (for webserver)
+    add_repeating_timer_ms(10, lwip_poll_timer, NULL, &lwip_timer);
+
     // Start the BTstack event loop
     // This handles all Bluetooth communication and NEVER RETURNS
     // Motor controller and web server are initialized in my_platform.c
@@ -64,3 +79,5 @@ int main() {
     printf("Starting BTstack event loop...\n\n");
     btstack_run_loop_execute();
 }
+
+

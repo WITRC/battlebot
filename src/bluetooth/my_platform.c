@@ -174,8 +174,13 @@ static void my_platform_on_init_complete(void) {
     add_repeating_timer_ms(100, arming_timer_callback, NULL, &g_arming_timer);
 
     // Initialize web server (WiFi AP already started in main.c)
-    printf("\n");
-    web_server_init(&g_motors);
+    wifi_ap_init();
+
+    printf("web_server_init...\n");
+    if (!web_server_init(&g_motors)) {
+        printf("FATAL: Failed to initialize web server!\n");
+        return;
+    }
 
     printf("\n");
     printf("Controls (Tank Drive):\n");
