@@ -32,20 +32,11 @@ static bool lwip_poll_timer(struct repeating_timer *t) {
 /**
  * Main entry point
  *
- * Initialization sequence:
- * 1. stdio_init_all() - USB serial for printf
- * 2. cyw43_arch_init() - Initialize WiFi/BT chip
- * 3. wifi_ap_init() - Start WiFi access point
- * 5. uni_platform_set_custom() - Register Bluepad32 callbacks
- * 6. uni_init() - Initialize Bluepad32
- * 7. btstack_run_loop_execute() - Start event loop (never returns)
- *
- * Note: Motor controller and web server are initialized in my_platform.c
+ * Motor controller and web server are initialized in my_platform.c
  * after Bluetooth is fully ready.
  */
 int main() {
-    // Initialize USB serial output
-    // Connect with: screen /dev/tty.usbmodem* 115200
+    // Initialize USB serial output (Connect with: screen /dev/tty.usbmodem* 115200)
     stdio_init_all();
 
     // Small delay to allow USB serial to connect
@@ -87,9 +78,6 @@ int main() {
     // once Bluetooth is fully ready
     printf("Starting BTstack event loop...\n\n");
     btstack_run_loop_execute();
-
-    // We never get here
-    return 0;
 }
 
 
