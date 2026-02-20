@@ -8,17 +8,27 @@
 
 #include "secrets.h"  // Contains SECRET_WIFI_PASSWORD (gitignored)
 
+// =============================================================================
+// ROBOT IDENTITY
+// =============================================================================
+
 #define ROBOT_NAME  "Monster Book of Monsters"
 
 // =============================================================================
 // HARDWARE PIN ASSIGNMENTS
 // =============================================================================
 
-#define PIN_MOTOR_LEFT         0   // GP0 - Left drive motor
-#define PIN_MOTOR_RIGHT        1   // GP1 - Right drive motor
-#define PIN_WEAPON             4   // GP4 - Weapon motor
+// ESC Motor Pins (PWM signal to ESC)
+#define PIN_MOTOR_TRH_LEFT         0   // GP0 - Left drive motor
+#define PIN_MOTOR_REV_LEFT         1   // GP0 - Left drive motor
+#define PIN_MOTOR_TRH_RIGHT         2   // GP0 - Left drive motor
+#define PIN_MOTOR_REV_RIGHT        3   // GP0 - Left drive motor
+#define PIN_WEAPON             4   // GP2 - Weapon motor
+
+// Analog Inputs
 #define PIN_BATTERY_ADC  26  // ADC0 - Battery voltage divider
 
+// Status LED is handled by CYW43 (CYW43_WL_GPIO_LED_PIN)
 
 // =============================================================================
 // MOTOR SETTINGS
@@ -27,22 +37,7 @@
 // ESC PWM Configuration (50Hz servo-style)
 #define MOTOR_PWM_FREQ      50      // Hz
 
-// ESC Pulse Width Timing (microseconds)
-#define DRIVE_MIN_US        1000    // Full reverse / idle
-#define DRIVE_MID_US        1500    // Stopped (for bidirectional)
-#define DRIVE_MAX_US        2000    // Full forward
-#define WEAPON_MIN_US       1000
-#define WEAPON_MID_US       1500
-#define WEAPON_MAX_US       2000
-
-#define ARM_SEQUENCE_ONE    1480
-#define ARM_SEQUENCE_TWO    1550
-#define ARM_SEQUENCE_ONE_DELAY  5000
-#define ARM_SEQUENCE_TWO_DELAY  2000
-
 // Motor Behavior
-#define MOTOR_BIDIRECTIONAL true   // Try unidirectional arming
-#define MOTOR_INVERT_SIGNAL false   // No inverting transistor on GPIO 0
 #define MOTOR_MAX_SPEED     100     // Maximum speed percentage
 #define MOTOR_DEADBAND      10      // Ignore inputs below this %
 
@@ -50,9 +45,12 @@
 // SAFETY SETTINGS
 // =============================================================================
 
-// Failsafe - stops motors if no controller input
-#define FAILSAFE_ENABLED     true
-#define FAILSAFE_TIMEOUT_MS  500    // Stop if no command for this long
+#define FAILSAFE_ENABLED    true
+#define FAILSAFE_TIMEOUT_MS 2000    // Time without commands before triggering failsafe
+
+// Safety limits (absolute min/max to prevent ESC damage)
+#define ESC_ABS_MIN_US      900
+#define ESC_ABS_MAX_US      2100
 
 // Low battery cutoff (disable if no battery sensor connected)
 #define ENABLE_LOW_BATTERY_CUTOFF  false

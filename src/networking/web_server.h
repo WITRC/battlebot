@@ -1,7 +1,7 @@
-// =============================================================================
-// Web Server for Monster Book of Monsters
-// Simple HTTP server for status dashboard
-// =============================================================================
+/*
+ * Web Server for Monster Book of Monsters
+ * Simple HTTP server for status dashboard
+*/
 
 #ifndef WEB_SERVER_H
 #define WEB_SERVER_H

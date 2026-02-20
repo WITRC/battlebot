@@ -1,7 +1,7 @@
-// =============================================================================
-// Web Server Implementation
-// Simple HTTP server using lwIP for status dashboard
-// =============================================================================
+/*
+ * Web Server Implementation
+ * Simple HTTP server using lwIP for status dashboard
+*/
 
 #include "web_server.h"
 #include "wifi_ap.h"
@@ -12,7 +12,7 @@
 
 // State
 static struct tcp_pcb* g_server_pcb = NULL;
-static motor_controller_t* g_motors = NULL;
+static motor_controller_t* motors_ctrl = NULL;
 static bool g_running = false;
 
 // Buffer for building HTTP responses
@@ -32,20 +32,18 @@ static int generate_status_page(char* buffer, int max_len) {
     // init values
     int left;
     int right;
-    weapon;
-    bool armed;
+    int weapon;
     float voltage;
     int battery_percent;
     float temp;
 
     // get motor data
-    if (g_motors != NULL) {
-        motor_controller_get_status(g_motors, &left, &right, &weapon, &armed);
-        left = g_motors->left_speed;
-        right = g_motors->right_speed;
-        weapon = g_motors->weapon_speed;
+    if (motors_ctrl != NULL) {
+        motor_controller_get_status(motors_ctrl, &left, &right, &weapon);
+        left = motors_ctrl->left_speed;
+        right = motors_ctrl->right_speed;
+        weapon = motors_ctrl->weapon_speed;
 
-        armed = g_motors->weapon_armed;
     }
 
     // response template
@@ -60,7 +58,6 @@ static int generate_status_page(char* buffer, int max_len) {
         "<style>"
         "body{font-family:monospace;background:#1a1a2e;color:#eee;padding:20px;text-align:center;}"
         ".box{background:#16213e;padding:15px;margin:10px auto;border-radius:8px;max-width:400px;border:1px solid #e94560;}"
-        ".armed{color:#ff4444;font-weight:bold;font-size:1.5em;}"
         ".safe{color:#44ff44;font-weight:bold;font-size:1.5em;}"
         "</style></head><body>"
         "<h1>%s</h1>"
@@ -80,8 +77,6 @@ static int generate_status_page(char* buffer, int max_len) {
         "</div>"
         "</body></html>",
         ROBOT_NAME,                            // %s (H1)
-        armed ? "armed" : "safe",              // %s (CSS class)
-        armed ? "SYSTEM ARMED" : "SYSTEM SAFE",// %s (Status text)
         left, right, weapon,                   // %d, %d, %d
         voltage, battery_percent,              // %.2f, %d
         temp                                   // %.1f
@@ -162,7 +157,7 @@ static void http_close(struct tcp_pcb* tpcb) {
 // =============================================================================
 
 bool web_server_init(motor_controller_t* motors) {
-    g_motors = motors;
+    motors_ctrl = motors;
 
     printf("Starting web server on port %d...\n", WEB_SERVER_PORT);
 
