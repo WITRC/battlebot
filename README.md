@@ -1,6 +1,6 @@
 # Monster Book of Monsters
 
-Pico 2 W battlebot with Bluetooth controller support and WiFi dashboard.
+Pico 2 W battlebot with Bluetooth controller support and Wi-Fi dashboard.
 
 ## Cross-Platform Setup
 

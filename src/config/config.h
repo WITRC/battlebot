@@ -66,7 +66,7 @@
 #define BATTERY_ADC_RATIO       5.7f    // Voltage divider ratio
 
 // =============================================================================
-// WIFI SETTINGS
+// Wi-Fi SETTINGS
 // =============================================================================
 
 #define WIFI_AP_SSID      "Monster Book of Monsters"
