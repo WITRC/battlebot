@@ -17,7 +17,7 @@
 
 /**
  * Initialize and start the web server.
- * WiFi AP must be initialized first.
+ * Wi-Fi AP must be initialized first.
  *
  * @param motors  Pointer to motor controller for status display
  * @return true on success
