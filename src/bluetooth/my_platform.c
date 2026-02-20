@@ -33,7 +33,7 @@ static bool prev_xbox_pressed = false;
 /**
  * left stick Y = left motor, right stick Y = right motor, right trigger = weapon speed , Xbox button (system button) → emergency stop
  */
-static void process_controller_input(uni_gamepad_t* gp) {
+static void process_controller_input(uni_gamepad_t *gp) {
     if (motor_ctrl.state == initializing) {
         printf("Cannot process input while initializing");
         return;
@@ -54,10 +54,10 @@ static void process_controller_input(uni_gamepad_t* gp) {
     }
 
     cyw43_arch_poll();
-    if (motor_controller_check_failsafe(&motor_ctrl)) { //todo: doesn't work
+    if (motor_controller_check_failsafe(&motor_ctrl)) {
+        //todo: doesn't work
         return;
     }
-
 
 
     prev_xbox_pressed = xbox_pressed;
@@ -84,7 +84,7 @@ static void process_controller_input(uni_gamepad_t* gp) {
 /**
  * Called once when Bluepad32 initializes.
  */
-static void my_platform_init(int argc, const char** argv) {
+static void my_platform_init(int argc, const char **argv) {
     ARG_UNUSED(argc);
     ARG_UNUSED(argv);
     printf("Monster Book of Monsters - Controller initialized\n");
@@ -103,7 +103,7 @@ static void my_platform_on_init_complete(void) {
     motor_controller_init(&motor_ctrl);
     motor_ctrl.state = stopped; // Start in "off" state until controller is connected
 
-    // Initialize web server (WiFi AP already started in main.c)
+    // Initialize web server (Wi-Fi AP already started in main.c)
     wifi_ap_init();
 
     printf("web_server_init...\n");
@@ -128,7 +128,7 @@ static void my_platform_on_init_complete(void) {
     // Start scanning for controllers
     uni_bt_start_scanning_and_autoconnect_unsafe();
 
-    cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 0);  // LED off = waiting for controller
+    cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 0); // LED off = waiting for controller
 }
 
 /**
@@ -136,13 +136,15 @@ static void my_platform_on_init_complete(void) {
  * Filter to only accept Xbox controllers.
  */
 //todo: replace with specific device UUID (AC:8E:BD:6C:6D:CC) (not sure)
-static uni_error_t my_platform_on_device_discovered(bd_addr_t addr, const char* name, uint16_t cod, uint8_t rssi) {
-    if (name != NULL && strstr(name, "Xbox") != NULL) { // filter by "Xbox" in name
+static uni_error_t my_platform_on_device_discovered(bd_addr_t addr, const char *name, uint16_t cod, uint8_t rssi) {
+    if (name != NULL && strstr(name, "Xbox") != NULL) {
+        // filter by "Xbox" in name
         printf("Xbox controller found: %s (RSSI: %d)\n", name, rssi);
         return UNI_ERROR_SUCCESS;
     }
 
-        if ((cod & 0x050C) == 0x0508) { // filter by Class of Device (Xbox BLE may have empty name initially)
+    if ((cod & 0x050C) == 0x0508) {
+        // filter by Class of Device (Xbox BLE may have empty name initially)
         printf("Gamepad found (COD: 0x%04x, RSSI: %d)\n", cod, rssi);
         return UNI_ERROR_SUCCESS;
     }
@@ -153,15 +155,15 @@ static uni_error_t my_platform_on_device_discovered(bd_addr_t addr, const char* 
 /**
  * Called when a controller has connected.
  */
-static void my_platform_on_device_connected(uni_hid_device_t* d) {
+static void my_platform_on_device_connected(uni_hid_device_t *d) {
     printf("Controller connected!\n");
     motor_ctrl.state = stopped; // Set to "on" state when controller connects
     uni_bt_stop_scanning_safe();
-    cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);     // LED on = controller connected
+    cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1); // LED on = controller connected
 }
 
 
-static void my_platform_on_device_disconnected(uni_hid_device_t* d) {
+static void my_platform_on_device_disconnected(uni_hid_device_t *d) {
     printf("\n");
     printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
     printf("!!!     CONTROLLER DISCONNECTED - E-STOP      !!!\n");
@@ -183,7 +185,7 @@ static void my_platform_on_device_disconnected(uni_hid_device_t* d) {
     uni_bt_start_scanning_and_autoconnect_safe();
 }
 
-static uni_error_t my_platform_on_device_ready(uni_hid_device_t* d) {
+static uni_error_t my_platform_on_device_ready(uni_hid_device_t *d) {
     printf("\n");
     printf("*** Controller ready - DRIVE ENABLED ***\n");
     printf("(Weapon ready - use right trigger)\n");
@@ -191,14 +193,14 @@ static uni_error_t my_platform_on_device_ready(uni_hid_device_t* d) {
     return UNI_ERROR_SUCCESS;
 }
 
-static const uni_property_t* my_platform_get_property(uni_property_idx_t idx) {
+static const uni_property_t *my_platform_get_property(uni_property_idx_t idx) {
     ARG_UNUSED(idx);
     return NULL;
 }
 
-static void my_platform_on_oob_event(uni_platform_oob_event_t event, void* data) {
+static void my_platform_on_oob_event(uni_platform_oob_event_t event, void *data) {
     if (event == UNI_PLATFORM_OOB_BLUETOOTH_ENABLED) {
-        printf("Bluetooth scanning: %s\n", (bool)(data) ? "on" : "off");
+        printf("Bluetooth scanning: %s\n", (bool) (data) ? "on" : "off");
     }
 }
 
@@ -228,18 +230,18 @@ static void print_buttons(uint32_t buttons, uint8_t misc_buttons) {
     }
 }
 
-static const char* dpad_to_string(uint8_t dpad) {
+static const char *dpad_to_string(uint8_t dpad) {
     switch (dpad) {
-        case 0:                            return "none";
-        case DPAD_UP:                      return "UP";
-        case DPAD_DOWN:                    return "DOWN";
-        case DPAD_RIGHT:                   return "RIGHT";
-        case DPAD_LEFT:                    return "LEFT";
-        case (DPAD_UP | DPAD_RIGHT):       return "UP+RIGHT";
-        case (DPAD_DOWN | DPAD_RIGHT):     return "DOWN+RIGHT";
-        case (DPAD_UP | DPAD_LEFT):        return "UP+LEFT";
-        case (DPAD_DOWN | DPAD_LEFT):      return "DOWN+LEFT";
-        default:                           return "?";
+        case 0: return "none";
+        case DPAD_UP: return "UP";
+        case DPAD_DOWN: return "DOWN";
+        case DPAD_RIGHT: return "RIGHT";
+        case DPAD_LEFT: return "LEFT";
+        case (DPAD_UP | DPAD_RIGHT): return "UP+RIGHT";
+        case (DPAD_DOWN | DPAD_RIGHT): return "DOWN+RIGHT";
+        case (DPAD_UP | DPAD_LEFT): return "UP+LEFT";
+        case (DPAD_DOWN | DPAD_LEFT): return "DOWN+LEFT";
+        default: return "?";
     }
 }
 
@@ -247,7 +249,7 @@ static const char* dpad_to_string(uint8_t dpad) {
  * Called every time controller sends new input data.
  * This is the main control loop for the robot!
  */
-static void my_platform_on_controller_data(uni_hid_device_t* d, uni_controller_t* ctl) {
+static void my_platform_on_controller_data(uni_hid_device_t *d, uni_controller_t *ctl) {
     static uni_controller_t prev = {0};
 
     // Only process if something changed
@@ -258,7 +260,7 @@ static void my_platform_on_controller_data(uni_hid_device_t* d, uni_controller_t
     prev = *ctl;
 
     if (ctl->klass == UNI_CONTROLLER_CLASS_GAMEPAD) {
-        uni_gamepad_t* gp = &ctl->gamepad;
+        uni_gamepad_t *gp = &ctl->gamepad;
 
         process_controller_input(gp);
 
@@ -277,7 +279,7 @@ static void my_platform_on_controller_data(uni_hid_device_t* d, uni_controller_t
 // PLATFORM REGISTRATION
 // =============================================================================
 
-struct uni_platform* get_my_platform(void) {
+struct uni_platform *get_my_platform(void) {
     static struct uni_platform plat = {
         .name = "Monster Book of Monsters",
         .init = my_platform_init,
