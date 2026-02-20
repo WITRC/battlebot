@@ -8,25 +8,17 @@
 
 #include "secrets.h"  // Contains SECRET_WIFI_PASSWORD (gitignored)
 
-// =============================================================================
-// ROBOT IDENTITY
-// =============================================================================
-
 #define ROBOT_NAME  "Monster Book of Monsters"
 
 // =============================================================================
 // HARDWARE PIN ASSIGNMENTS
 // =============================================================================
 
-// ESC Motor Pins (PWM signal to ESC)
 #define PIN_MOTOR_LEFT         0   // GP0 - Left drive motor
 #define PIN_MOTOR_RIGHT        1   // GP1 - Right drive motor
 #define PIN_WEAPON             4   // GP4 - Weapon motor
-
-// Analog Inputs
 #define PIN_BATTERY_ADC  26  // ADC0 - Battery voltage divider
 
-// Status LED is handled by CYW43 (CYW43_WL_GPIO_LED_PIN)
 
 // =============================================================================
 // MOTOR SETTINGS

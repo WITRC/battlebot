@@ -4,6 +4,3 @@
 [submodule "pico-sdk"]
 	path = pico-sdk
 	url = https://github.com/raspberrypi/pico-sdk.git
-[submodule "tests/CMock"]
-	path = tests/CMock
-	url = https://github.com/ThrowTheSwitch/CMock.git

@@ -5,10 +5,6 @@
 #include "hardware/gpio.h"
 #include "hardware/utility.h"
 
-#ifdef UNIT_TESTING
-    #include "mock_pico_hardware.h"
-#endif
-
 void motor_init(motor_t* motor) {
     // Configure GPIO for PWM
     gpio_set_function(motor->gpio_pin, GPIO_FUNC_PWM);

@@ -9,10 +9,6 @@
 #include "utility.h"
 #include "pico/time.h"
 
-#ifdef UNIT_TESTING
-    #include "mock_pico_hardware.h"
-#endif
-
 /**
  * Helper: Update command timestamp for failsafe
 */

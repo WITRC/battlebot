@@ -9,11 +9,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#ifndef UNIT_TESTING
-    #include "pico/stdlib.h"  // For uint and Pico types
-#else
-#endif
-
 // PWM configuration for 50Hz operation
 // Pico runs at 125MHz by default
 // For 50Hz with good resolution: 125MHz / (wrap * divider) = 50Hz
