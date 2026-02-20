@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include "config.h"
 
-static float clamp( float x, float min, float max)
+static float clamp_f( float x, float min, float max)
 {
     if (x < min) return min;
     if (x > max) return max;
@@ -34,7 +34,7 @@ static float map_range(float x, float in_min, float in_max,
     if (in_max == in_min)
         return out_min;
 
-    x = clamp(x, in_min, in_max);
+    x = clamp_f(x, in_min, in_max);
     return (x - in_min) * (out_max - out_min) /
            (in_max - in_min) + out_min;
 }

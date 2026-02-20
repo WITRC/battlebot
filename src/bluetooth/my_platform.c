@@ -254,6 +254,7 @@ static void my_platform_on_controller_data(uni_hid_device_t *d, uni_controller_t
 
     // Only process if something changed
     if (memcmp(&prev, ctl, sizeof(*ctl)) == 0) {
+        motor_controller_check_failsafe(&motor_ctrl);
         return;
     }
 
