@@ -1,7 +1,7 @@
-/*
- * Wi-Fi Access Point Implementation
- * Based on pico-examples access_point
-*/
+/**
+ * @file wifi_ap.c
+ * @brief CYW43 Wi-Fi access-point implementation (based on pico-examples access_point).
+ */
 
 #include "wifi_ap.h"
 #include <stdio.h>
@@ -13,7 +13,7 @@
 static bool g_ap_active = false;
 
 bool wifi_ap_init(void) {
-    printf("Starting WiFi Access Point...\n");
+    printf("Starting Wi-Fi Access Point...\n");
     printf("  SSID: %s\n", WIFI_AP_SSID);
     printf("  Password: %s\n", WIFI_AP_PASSWORD);
 
@@ -46,7 +46,7 @@ bool wifi_ap_init(void) {
 
     g_ap_active = true;
 
-    printf("WiFi AP ready!\n");
+    printf("Wi-Fi AP ready!\n");
     printf("  Connect to: %s\n", WIFI_AP_SSID);
     printf("  Browse to: http://%s/\n", WIFI_AP_IP);
 
@@ -69,6 +69,6 @@ void wifi_ap_stop(void) {
     if (g_ap_active) {
         cyw43_arch_disable_ap_mode();
         g_ap_active = false;
-        printf("WiFi AP stopped\n");
+        printf("Wi-Fi AP stopped\n");
     }
 }

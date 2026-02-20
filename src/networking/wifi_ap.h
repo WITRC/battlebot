@@ -1,8 +1,7 @@
-/*
- * Wi-Fi Access Point for Monster Book of Monsters
- * Creates a hotspot for web dashboard access
-*/
-
+/**
+ * @file wifi_ap.h
+ * @brief Wi-Fi access point driver for the web dashboard hotspot.
+ */
 #ifndef WIFI_AP_H
 #define WIFI_AP_H
 
@@ -10,35 +9,19 @@
 #include <stdbool.h>
 #include "config.h"  // All settings centralized
 
-// =============================================================================
-// API
-// =============================================================================
-
-/**
- * Initialize and start the WiFi access point.
- * @return true on success, false on failure
- */
+/** @brief Initialize and start the Wi-Fi access point. @return true on success. */
 bool wifi_ap_init(void);
 
-/**
- * Check if WiFi AP is running.
- */
+/** @brief Return true if the AP is active. */
 bool wifi_ap_is_active(void);
 
-/**
- * Get the AP's IP address as a string.
- */
+/** @brief Return the AP's IPv4 address as a dotted-decimal string. */
 const char* wifi_ap_get_ip(void);
 
-/**
- * Get number of connected clients.
- * Note: This may not be accurate on all platforms.
- */
+/** @brief Return the number of connected clients (platform accuracy may vary). */
 int wifi_ap_get_client_count(void);
 
-/**
- * Stop the WiFi access point.
- */
+/** @brief Stop the Wi-Fi access point. */
 void wifi_ap_stop(void);
 
 #endif // WIFI_AP_H

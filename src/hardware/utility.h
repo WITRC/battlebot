@@ -1,22 +1,23 @@
-/*
-// Created by griffty on 2/17/26.
-*/
-
+/**
+ * @file utility.h
+ * @brief Inline math helpers: clamp, range-map, and deadband.
+ */
 #ifndef MONSTER_BOOK_UTILITY_H
 #define MONSTER_BOOK_UTILITY_H
 
 #include <stdlib.h>
 #include "config.h"
 
-static float clamp_f( float x, float min, float max)
+/** @brief Clamp @p x to [@p min, @p max] (float). */
+static float clamp_f(float x, float min, float max)
 {
     if (x < min) return min;
     if (x > max) return max;
     return x;
 }
 
-
-static int clamp_int( int x, int min, int max)
+/** @brief Clamp @p x to [@p min, @p max] (int). */
+static int clamp_int(int x, int min, int max)
 {
     if (x < min) return min;
     if (x > max) return max;

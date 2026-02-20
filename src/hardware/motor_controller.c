@@ -1,7 +1,7 @@
-/*
- * Motor Controller Implementation
- * Tank/arcade drive mixing, weapon control, and failsafe
-*/
+/**
+ * @file motor_controller.c
+ * @brief Motor controller implementation: tank drive, weapon control, failsafe.
+ */
 
 #include "motor_controller.h"
 #include <stdio.h>
@@ -12,9 +12,7 @@
 #include "utility.h"
 #include "pico/time.h"
 
-/**
- * Helper: Update command timestamp for failsafe
-*/
+/** @brief Refresh the last-command timestamp and clear any active failsafe. */
 static void update_command_time(motor_controller_t* mc) {
     mc->last_command_time_ms = to_ms_since_boot(get_absolute_time());
     mc->failsafe_triggered = false;
