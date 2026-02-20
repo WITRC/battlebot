@@ -100,8 +100,16 @@ static void my_platform_on_init_complete(void) {
     printf("\n");
 
     motor_controller_init(&motor_ctrl);
-    web_server_init(&motor_ctrl);
     motor_ctrl.state = stopped; // Start in "off" state until controller is connected
+
+    // Initialize web server (WiFi AP already started in main.c)
+    wifi_ap_init();
+
+    printf("web_server_init...\n");
+    if (!web_server_init(&g_motors)) {
+        printf("FATAL: Failed to initialize web server!\n");
+        return;
+    }
 
     printf("\n");
     printf("Controls (Tank Drive):\n");
