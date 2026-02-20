@@ -7,6 +7,9 @@
 
 #include "utility.h"
 
+#define OMNI_MIN_PWM_US 1000
+#define OMNI_MAX_PWM_US 2000
+
 // ---- vtable methods ----
 static void omni_init(motor_t *bm) {
     motor_omni_t *m = (motor_omni_t *)(bm);
@@ -39,6 +42,6 @@ static const motor_vtbl_t OMNI_VTBL = {
 void motor_omni_ctor(motor_omni_t *m, uint gpio) {
     m->base.v = &OMNI_VTBL;
     m->pwm.gpio = gpio;
-    m->min_us = MIN_PWM_US;
-    m->max_us = MAX_PWM_US;
+    m->min_us = OMNI_MIN_PWM_US;
+    m->max_us = OMNI_MAX_PWM_US;
 }

@@ -1,6 +1,9 @@
 // motor_bi.c
 #include "motor_bi.h"
 
+#define BI_MIN_PWM_US 1100
+#define BI_MAX_PWM_US 1940
+
 #include  <stdio.h>
 
 #include "pico/stdlib.h" // sleep_ms
@@ -78,11 +81,11 @@ void motor_bi_ctor(motor_bi_t *m,
     m->throttle_pwm.gpio = throttle_gpio;
     m->reverse_pwm.gpio  = reverse_gpio;
 
-    m->thr_min_us = MIN_PWM_US;
-    m->thr_max_us = MAX_PWM_US;
+    m->thr_min_us = BI_MIN_PWM_US;
+    m->thr_max_us = BI_MAX_PWM_US;
 
-    m->rev_fwd_us = MIN_PWM_US;
-    m->rev_rev_us = MAX_PWM_US;
+    m->rev_fwd_us = BI_MIN_PWM_US;
+    m->rev_rev_us = BI_MAX_PWM_US;
 
     m->last_dir = 0;
 }

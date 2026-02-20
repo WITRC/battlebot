@@ -8,9 +8,6 @@
 #include "motor.h"
 #include "motor_pwm_control.h"
 
-#define MAX_PWM_US 2000
-#define MIN_PWM_US 1000
-
 typedef struct {
     motor_t base;
     motor_pwm_t pwm;

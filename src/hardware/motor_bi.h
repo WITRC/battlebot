@@ -9,9 +9,6 @@
 #include "motor.h"
 #include "motor_pwm_control.h"
 
-#define MAX_PWM_US 1940
-#define MIN_PWM_US 1100
-
 // Bidirectional ESC using separate reverse wire (Brake Type 1.2 "Reverse Brake")
 typedef struct {
     motor_t base;               // MUST be first (inheritance)
