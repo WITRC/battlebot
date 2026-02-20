@@ -1,7 +1,7 @@
-// =============================================================================
+/*
 // Monster Book of Monsters - Central Configuration
 // All hardware pins, settings, and tunables in one place
-// =============================================================================
+*/
 
 #ifndef CONFIG_H
 #define CONFIG_H

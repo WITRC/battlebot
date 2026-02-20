@@ -1,7 +1,7 @@
-// =============================================================================
-// WiFi Access Point for Monster Book of Monsters
-// Creates a hotspot for web dashboard access
-// =============================================================================
+/*
+ * Wi-Fi Access Point for Monster Book of Monsters
+ * Creates a hotspot for web dashboard access
+*/
 
 #ifndef WIFI_AP_H
 #define WIFI_AP_H

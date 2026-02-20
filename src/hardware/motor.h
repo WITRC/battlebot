@@ -1,13 +1,15 @@
-// =============================================================================
-// ESC Motor Driver for Pico 2 W
-// Controls brushless ESCs using 50Hz PWM (servo-style pulse widths)
-// =============================================================================
+/*
+ * ESC Motor Driver for Pico 2 W
+ * Controls brushless ESCs using 50Hz PWM (servo-style pulse widths)
+*/
 
 #ifndef MOTOR_H
 #define MOTOR_H
 
 #include <stdint.h>
 #include <stdbool.h>
+
+#include "pico/types.h"
 
 // PWM configuration for 50Hz operation
 // Pico runs at 125MHz by default

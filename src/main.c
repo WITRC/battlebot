@@ -1,7 +1,7 @@
-// =============================================================================
-// Monster Book of Monsters - Main Entry Point
-// Pico 2 W + Bluepad32 Bluetooth + WiFi Dashboard
-// =============================================================================
+/*
+Monster Book of Monsters - Main Entry Point
+Pico 2 W + Bluepad32 Bluetooth + Wi-Fi Dashboard
+*/
 
 #include <btstack_run_loop.h>  // BTstack event loop
 #include <pico/cyw43_arch.h>   // CYW43 WiFi/BT chip driver

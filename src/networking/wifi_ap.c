@@ -1,7 +1,7 @@
-// =============================================================================
-// WiFi Access Point Implementation
-// Based on pico-examples access_point
-// =============================================================================
+/*
+ * Wi-Fi Access Point Implementation
+ * Based on pico-examples access_point
+*/
 
 #include "wifi_ap.h"
 #include <stdio.h>

@@ -1,7 +1,7 @@
-// =============================================================================
-// Motor Controller for BattleBot
-// High-level control: tank/arcade drive, weapon, failsafe, arming
-// =============================================================================
+/*
+ * Motor Controller for BattleBot
+ * High-level control: tank/arcade drive, weapon, failsafe, arming
+*/
 
 #ifndef MOTOR_CONTROLLER_H
 #define MOTOR_CONTROLLER_H

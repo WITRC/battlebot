@@ -1,7 +1,6 @@
-// =============================================================================
-// lwIP Options for Monster Book of Monsters
-// Minimal configuration for WiFi AP with HTTP server
-// =============================================================================
+/*
+ * lwIP Options for Monster Book of Monsters
+*/
 
 #ifndef LWIPOPTS_H
 #define LWIPOPTS_H

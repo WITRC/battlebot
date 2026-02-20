@@ -1,7 +1,7 @@
-// =============================================================================
-// Motor Controller Implementation
-// Tank/arcade drive mixing, weapon control, and failsafe
-// =============================================================================
+/*
+ * Motor Controller Implementation
+ * Tank/arcade drive mixing, weapon control, and failsafe
+*/
 
 #include "motor_controller.h"
 #include <stdio.h>

@@ -1,6 +1,6 @@
-//
+/*
 // Created by griffty on 2/17/26.
-//
+*/
 
 #ifndef MONSTER_BOOK_UTILITY_H
 #define MONSTER_BOOK_UTILITY_H
