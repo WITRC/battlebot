@@ -1,7 +1,7 @@
-// =============================================================================
-// Motor Controller Implementation
-// Tank/arcade drive mixing, weapon control, and failsafe
-// =============================================================================
+/*
+ * Motor Controller Implementation
+ * Tank/arcade drive mixing, weapon control, and failsafe
+*/
 
 #include "motor_controller.h"
 #include <stdio.h>
@@ -11,10 +11,6 @@
 #include "motor_omni.h"
 #include "utility.h"
 #include "pico/time.h"
-
-#ifdef UNIT_TESTING
-    #include "mock_pico_hardware.h"
-#endif
 
 /**
  * Helper: Update command timestamp for failsafe

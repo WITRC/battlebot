@@ -1,7 +1,7 @@
-// =============================================================================
-// Monster Book of Monsters - Main Entry Point
-// Pico 2 W + Bluepad32 Bluetooth + WiFi Dashboard
-// =============================================================================
+/*
+Monster Book of Monsters - Main Entry Point
+Pico 2 W + Bluepad32 Bluetooth + Wi-Fi Dashboard
+*/
 
 #include <btstack_run_loop.h>  // BTstack event loop
 #include <pico/cyw43_arch.h>   // CYW43 WiFi/BT chip driver
@@ -10,7 +10,6 @@
 
 #include "config.h"            // Central configuration
 #include "sdkconfig.h"         // Bluepad32 configuration
-#include "wifi_ap.h"           // WiFi access point
 
 // Verify we're using custom platform mode (required for Pico W)
 #ifndef CONFIG_BLUEPAD32_PLATFORM_CUSTOM
@@ -23,20 +22,11 @@ struct uni_platform* get_my_platform(void);
 /**
  * Main entry point
  *
- * Initialization sequence:
- * 1. stdio_init_all() - USB serial for printf
- * 2. cyw43_arch_init() - Initialize WiFi/BT chip
- * 3. wifi_ap_init() - Start WiFi access point
- * 5. uni_platform_set_custom() - Register Bluepad32 callbacks
- * 6. uni_init() - Initialize Bluepad32
- * 7. btstack_run_loop_execute() - Start event loop (never returns)
- *
- * Note: Motor controller and web server are initialized in my_platform.c
+ * Motor controller and web server are initialized in my_platform.c
  * after Bluetooth is fully ready.
  */
 int main() {
-    // Initialize USB serial output
-    // Connect with: screen /dev/tty.usbmodem* 115200
+    // Initialize USB serial output (Connect with: screen /dev/tty.usbmodem* 115200)
     stdio_init_all();
 
     // Small delay to allow USB serial to connect
@@ -73,7 +63,4 @@ int main() {
     // once Bluetooth is fully ready
     printf("Starting BTstack event loop...\n\n");
     btstack_run_loop_execute();
-
-    // We never get here
-    return 0;
 }

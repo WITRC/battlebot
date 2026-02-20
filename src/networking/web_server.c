@@ -1,7 +1,7 @@
-// =============================================================================
-// Web Server Implementation
-// Simple HTTP server using lwIP for status dashboard
-// =============================================================================
+/*
+ * Web Server Implementation
+ * Simple HTTP server using lwIP for status dashboard
+*/
 
 #include "web_server.h"
 #include "wifi_ap.h"

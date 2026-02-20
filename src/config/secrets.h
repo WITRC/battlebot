@@ -1,6 +1,6 @@
-// =============================================================================
-// Secrets Configuration - DO NOT COMMIT TO GIT
-// =============================================================================
+/*
+ * Secrets Configuration - DO NOT COMMIT TO GIT
+*/
 
 #ifndef SECRETS_H
 #define SECRETS_H
