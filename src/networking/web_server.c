@@ -29,12 +29,14 @@ static void http_close(struct tcp_pcb* tpcb);
 // =============================================================================
 
 static int generate_status_page(char* buffer, int max_len) {
-    // default values
-    int left = -999, right = -999, weapon = -999;
-    bool armed = true;
-    float voltage = -999.0f;
-    int battery_percent = -999;
-    float temp = -999.0f;
+    // init values
+    int left;
+    int right;
+    weapon;
+    bool armed;
+    float voltage;
+    int battery_percent;
+    float temp;
 
     // get motor data
     if (g_motors != NULL) {
