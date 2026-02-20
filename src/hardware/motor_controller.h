@@ -15,6 +15,9 @@
 // MOTOR CONTROLLER API
 // =============================================================================
 
+// Motor controller instance (initialized when Bluetooth is ready)
+typedef enum {initializing, active, stopped} p_state;
+
 // Motor controller state
 typedef struct {
     motor_t motor_left;
@@ -25,6 +28,9 @@ typedef struct {
     int left_speed;
     int right_speed;
     int weapon_speed;
+
+    p_state state;
+
 
     // Failsafe tracking
     uint32_t last_command_time_ms;

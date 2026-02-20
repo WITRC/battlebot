@@ -31,10 +31,13 @@ typedef struct {
     bool bidirectional;      // True if ESC supports reverse (uses mid_us as stop)
 } motor_t;
 
-#define WHEEL_MOTOR_MIN_US 1000
-#define WHEEL_MOTOR_MAX_US 2000
+#define WHEEL_MOTOR_MIN_US 1100
+#define WHEEL_MOTOR_MAX_US 1940
 
-#define WEAPON_MOTOR_MIN_US 1500
+#define WHEEL_MOTOR_FORWARD_US 1100
+#define WHEEL_MOTOR_REVERSE_US 1940
+
+#define WEAPON_MOTOR_MIN_US 1000
 #define WEAPON_MOTOR_MAX_US 2000
 
 /**

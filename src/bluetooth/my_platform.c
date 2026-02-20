@@ -21,11 +21,7 @@
 // GLOBAL STATE
 // =============================================================================
 // platform states
-typedef enum {initializing, active, stopped} p_state;
-// Motor controller instance (initialized when Bluetooth is ready)
 static motor_controller_t motor_ctrl;
-static p_state state = initializing;
-
 static bool xbox_pressed = false;
 static bool prev_xbox_pressed = false;
 // =============================================================================
@@ -37,12 +33,8 @@ static bool prev_xbox_pressed = false;
  * left stick Y = left motor, right stick Y = right motor, right trigger = weapon speed , Xbox button (system button) → emergency stop
  */
 static void process_controller_input(uni_gamepad_t* gp) {
-    if (state == initializing) {
-        return;
-    }
-
-    cyw43_arch_poll();
-    if (motor_controller_check_failsafe(&motor_ctrl)) {
+    if (motor_ctrl.state == initializing) {
+        printf("Cannot process input while initializing");
         return;
     }
 
@@ -50,19 +42,27 @@ static void process_controller_input(uni_gamepad_t* gp) {
     xbox_pressed = (gp->misc_buttons & MISC_BUTTON_SYSTEM) != 0;
 
     if (xbox_pressed && !prev_xbox_pressed) {
-        if (state == active) {
-            state = stopped;
+        if (motor_ctrl.state == active) {
+            motor_ctrl.state = stopped;
             printf("EMERGENCY STOP ACTIVATED!\n");
             motor_controller_stop_all(&motor_ctrl);
-        } else if (state == stopped) {
+        } else if (motor_ctrl.state == stopped) {
             printf("Resuming normal operation...\n");
-            state = active;
+            motor_ctrl.state = active;
         }
     }
 
+    cyw43_arch_poll();
+    if (motor_controller_check_failsafe(&motor_ctrl)) { //todo: doesn't work
+        return;
+    }
+
+
+
     prev_xbox_pressed = xbox_pressed;
 
-    if (state == stopped) {
+    if (motor_ctrl.state == stopped) {
+        printf(">>> Controller input received but currently stopped. Press Xbox button to resume.\n");
         return;
     }
 
@@ -101,7 +101,7 @@ static void my_platform_on_init_complete(void) {
 
     motor_controller_init(&motor_ctrl);
     web_server_init(&motor_ctrl);
-    state = stopped; // Start in "off" state until controller is connected
+    motor_ctrl.state = active; // Start in "off" state until controller is connected
 
     printf("\n");
     printf("Controls (Tank Drive):\n");
@@ -126,7 +126,7 @@ static void my_platform_on_init_complete(void) {
  * Called when a Bluetooth device is discovered.
  * Filter to only accept Xbox controllers.
  */
-//todo: replace with specific device UUID
+//todo: replace with specific device UUID (AC:8E:BD:6C:6D:CC) (not sure)
 static uni_error_t my_platform_on_device_discovered(bd_addr_t addr, const char* name, uint16_t cod, uint8_t rssi) {
     if (name != NULL && strstr(name, "Xbox") != NULL) { // filter by "Xbox" in name
         printf("Xbox controller found: %s (RSSI: %d)\n", name, rssi);
@@ -146,7 +146,7 @@ static uni_error_t my_platform_on_device_discovered(bd_addr_t addr, const char* 
  */
 static void my_platform_on_device_connected(uni_hid_device_t* d) {
     printf("Controller connected!\n");
-    state = active; // Set to "on" state when controller connects
+    motor_ctrl.state = active; // Set to "on" state when controller connects
     uni_bt_stop_scanning_safe();
     cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);     // LED on = controller connected
 }
@@ -159,10 +159,10 @@ static void my_platform_on_device_disconnected(uni_hid_device_t* d) {
     printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
 
     // SAFETY: Emergency stop all motors immediately
-    if (state != initializing) {
+    if (motor_ctrl.state != initializing) {
         printf(">>> Stopping all motors...\n");
         motor_controller_stop_all(&motor_ctrl);
-        state = stopped; // Set to "off" state until controller reconnects
+        motor_ctrl.state = stopped; // Set to "off" state until controller reconnects
         printf(">>> All motors stopped, weapon disarmed\n");
     }
 
@@ -260,7 +260,7 @@ static void my_platform_on_controller_data(uni_hid_device_t* d, uni_controller_t
         printf("| DPad: %-10s", dpad_to_string(gp->dpad));
         printf("| Sticks: (%+4d,%+4d) (%+4d,%+4d)",
                gp->axis_x, gp->axis_y, gp->axis_rx, gp->axis_ry);
-        printf("| Trig: %4d %4d\n", gp->brake, gp->throttle);
+        printf("| Trig: %4d %4d | State %1d\n", gp->brake, gp->throttle, motor_ctrl.state);
     }
 }
 

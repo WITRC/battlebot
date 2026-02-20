@@ -6,6 +6,7 @@
 #include "motor_controller.h"
 #include <stdio.h>
 
+#include "motor.h"
 #include "utility.h"
 #include "pico/time.h"
 
@@ -56,6 +57,11 @@ void motor_controller_tank_drive(motor_controller_t* mc, int left, int right) {
     update_command_time(mc);
 }
 
+void motor_controller_weapon(motor_controller_t* mc, int weapon) {
+    motor_controller_set(&mc->weapon, &mc->weapon_speed, weapon);
+    update_command_time(mc);
+}
+
 
 void motor_controller_stop_all(motor_controller_t* mc) {
     motor_stop(&mc->motor_left);
@@ -82,8 +88,8 @@ bool motor_controller_check_failsafe(motor_controller_t* mc) {
             }
             motor_controller_stop_all(mc);
             mc->failsafe_triggered = true;
+            return true;
         }
-        return true;
     }
 
     return false;
