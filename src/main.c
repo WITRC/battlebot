@@ -1,17 +1,20 @@
-/*
-Monster Book of Monsters - Main Entry Point
-Pico 2 W + Bluepad32 Bluetooth + Wi-Fi Dashboard
-*/
+/**
+ * @file main.c
+ * @brief Application entry point — initializes CYW43, Bluepad32, and the lwIP timer.
+ *
+ * Motor controller and web server are started in `my_platform.c` after the
+ * Bluetooth stack signals it is fully ready.
+ */
 
 #include <btstack_run_loop.h>  // BTstack event loop
-#include <pico/cyw43_arch.h>   // CYW43 WiFi/BT chip driver
-#include <pico/stdlib.h>       // Pico standard library
 #include <uni.h>               // Bluepad32 main header
+#include <pico/cyw43_arch.h>   // CYW43 Wi-Fi/BT chip driver
+#include <pico/stdlib.h>       // Pico standard library
 
 #include "config.h"            // Central configuration
 #include "sdkconfig.h"         // Bluepad32 configuration
-#include "wifi_ap.h"           // WiFi access point
 #include "web_server.h"
+#include "wifi_ap.h"           // Wi-Fi access point
 
 // Verify we're using custom platform mode (required for Pico W)
 #ifndef CONFIG_BLUEPAD32_PLATFORM_CUSTOM
@@ -23,6 +26,7 @@ struct uni_platform* get_my_platform(void);
 
 static struct repeating_timer lwip_timer;
 
+/** @brief Repeating timer callback that drives the lwIP network stack. */
 static bool lwip_poll_timer(struct repeating_timer *t) {
     cyw43_arch_poll();
     return true;
@@ -48,7 +52,7 @@ int main() {
     printf("  Initializing...\n");
     printf("==================================================\n\n");
 
-    // Initialize the CYW43 wireless chip (WiFi + Bluetooth)
+    // Initialize the CYW43 wireless chip (Wi-Fi + Bluetooth)
     printf("Initializing CYW43 wireless chip...\n");
     if (cyw43_arch_init()) {
         printf("FATAL: Failed to initialize CYW43!\n");

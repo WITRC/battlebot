@@ -1,7 +1,10 @@
-/*
- * Motor Controller for BattleBot
- * High-level control: tank/arcade drive, weapon, failsafe, arming
-*/
+/**
+ * @file motor_controller.h
+ * @brief High-level BattleBot motor controller.
+ *
+ * Provides tank drive, weapon control, failsafe, and arming logic on top of
+ * the low-level motor drivers.
+ */
 
 #ifndef MOTOR_CONTROLLER_H
 #define MOTOR_CONTROLLER_H
@@ -12,30 +15,23 @@
 #include "motor_bi.h"
 #include "motor_omni.h"
 
-// =============================================================================
-// MOTOR CONTROLLER API
-// =============================================================================
+/** Operational state of the motor controller. */
+typedef enum { initializing, active, stopped } p_state;
 
-// Motor controller instance (initialized when Bluetooth is ready)
-typedef enum {initializing, active, stopped} p_state;
-
-// Motor controller state
+/** Aggregate state for all drive and weapon motors. */
 typedef struct {
-    motor_bi_t motor_left;
-    motor_bi_t motor_right;
-    motor_omni_t weapon;
+    motor_bi_t motor_left;   /**< Left drive motor. */
+    motor_bi_t motor_right;  /**< Right drive motor. */
+    motor_omni_t weapon;     /**< Weapon/spinner motor. */
 
-    // Current speeds (-100 to 100 for drive, 0 to 100 for weapon)
-    int left_speed;
-    int right_speed;
-    int weapon_speed;
+    int left_speed;          /**< Current left speed  [-100, 100]. */
+    int right_speed;         /**< Current right speed [-100, 100]. */
+    int weapon_speed;        /**< Current weapon speed [0, 100]. */
 
     p_state state;
 
-
-    // Failsafe tracking
-    uint32_t last_command_time_ms;
-    bool failsafe_triggered;
+    uint32_t last_command_time_ms; /**< Timestamp of last received command (ms). */
+    bool failsafe_triggered;       /**< True when failsafe has fired. */
 } motor_controller_t;
 
 /**
@@ -44,9 +40,21 @@ typedef struct {
  */
 void motor_controller_init(motor_controller_t* mc);
 
+/**
+ * @brief Set left/right drive speeds for tank-style steering.
+ * @param left   Left-side speed  [-100, 100].
+ * @param right  Right-side speed [-100, 100].
+ */
 void motor_controller_tank_drive(motor_controller_t* mc, int left, int right);
+
+/** @brief Set weapon motor speed. @param weapon Speed [0, 100]. */
 void motor_controller_weapon(motor_controller_t* mc, int weapon);
 
+/**
+ * @brief Update a single motor's speed, applying deadband/clamping.
+ * @param cSpeed  Pointer to the cached speed value to update.
+ * @param speed   Desired speed [-100, 100].
+ */
 void motor_controller_set(motor_t* m, int* cSpeed, int speed);
 
 /**
@@ -61,6 +69,7 @@ void motor_controller_stop_all(motor_controller_t* mc);
  */
 bool motor_controller_check_failsafe(motor_controller_t* mc);
 
+/** @brief Read back the current cached speeds (out-params may be NULL). */
 void motor_controller_get_status(motor_controller_t* mc, int* left, int* right, int* weapon);
 
 #endif // MOTOR_CONTROLLER_H

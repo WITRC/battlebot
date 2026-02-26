@@ -1,8 +1,9 @@
-/*
- * Web Server for Monster Book of Monsters
- * Simple HTTP server for status dashboard
-*/
-
+/**
+ * @file web_server.h
+ * @brief Simple HTTP status-dashboard server.
+ *
+ * Wi-Fi AP must be initialized before calling @ref web_server_init.
+ */
 #ifndef WEB_SERVER_H
 #define WEB_SERVER_H
 
@@ -11,34 +12,20 @@
 #include "config.h"  // All settings centralized
 #include "motor_controller.h"
 
-// =============================================================================
-// API
-// =============================================================================
-
 /**
- * Initialize and start the web server.
- * Wi-Fi AP must be initialized first.
- *
- * @param motors  Pointer to motor controller for status display
- * @return true on success
+ * @brief Initialize and start the web server.
+ * @param motors  Motor controller used for the status display page.
+ * @return true on success.
  */
 bool web_server_init(motor_controller_t* motors);
 
-/**
- * Poll for incoming HTTP requests.
- * Call this periodically in main loop.
- * Uses non-blocking I/O.
- */
+/** @brief Poll for incoming HTTP requests (non-blocking; call each main-loop iteration). */
 void web_server_poll(void);
 
-/**
- * Stop the web server.
- */
+/** @brief Stop the web server and release resources. */
 void web_server_stop(void);
 
-/**
- * Check if web server is running.
- */
+/** @brief Return true if the web server is currently running. */
 bool web_server_is_running(void);
 
 #endif // WEB_SERVER_H

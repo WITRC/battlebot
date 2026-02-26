@@ -1,7 +1,7 @@
-/*
- * Web Server Implementation
- * Simple HTTP server using lwIP for status dashboard
-*/
+/**
+ * @file web_server.c
+ * @brief lwIP-based HTTP server that serves a live motor-status dashboard.
+ */
 
 #include "web_server.h"
 #include "wifi_ap.h"
@@ -28,6 +28,7 @@ static void http_close(struct tcp_pcb* tpcb);
 // HTML Generation
 // =============================================================================
 
+/** @brief Write a full HTTP 200 response with the motor-status HTML page into @p buffer. */
 static int generate_status_page(char* buffer, int max_len) {
     // init values
     int left;
@@ -83,6 +84,7 @@ static int generate_status_page(char* buffer, int max_len) {
     );
 }
 
+/** @brief Write an HTTP 404 response into @p buffer. */
 static int generate_404(char* buffer, int max_len) {
     return snprintf(buffer, max_len,
         "HTTP/1.1 404 Not Found\r\n"
@@ -97,6 +99,7 @@ static int generate_404(char* buffer, int max_len) {
 // TCP Callbacks
 // =============================================================================
 
+/** @brief lwIP receive callback — generates and sends the status page, then closes. */
 static err_t http_recv(void* arg, struct tcp_pcb* tpcb, struct pbuf* p, err_t err) {
     if (p == NULL) {
         http_close(tpcb);
@@ -128,12 +131,14 @@ static err_t http_recv(void* arg, struct tcp_pcb* tpcb, struct pbuf* p, err_t er
     return ERR_OK;
 }
 
+/** @brief lwIP error callback — connection errors are handled automatically by lwIP. */
 static void http_err(void* arg, err_t err) {
     // Error occurred, connection will be freed automatically
     (void)arg;
     (void)err;
 }
 
+/** @brief lwIP accept callback — wires up recv/err callbacks for each new connection. */
 static err_t http_accept(void* arg, struct tcp_pcb* newpcb, err_t err) {
     if (err != ERR_OK || newpcb == NULL) {
         return ERR_VAL;
@@ -146,6 +151,7 @@ static err_t http_accept(void* arg, struct tcp_pcb* newpcb, err_t err) {
     return ERR_OK;
 }
 
+/** @brief Tear down a TCP connection cleanly. */
 static void http_close(struct tcp_pcb* tpcb) {
     tcp_recv(tpcb, NULL);
     tcp_err(tpcb, NULL);

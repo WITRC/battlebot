@@ -1,11 +1,15 @@
-// motor_bi.c
+/**
+ * @file motor_bi.c
+ * @brief Bidirectional ESC motor driver implementation.
+ */
 #include "motor_bi.h"
 
-#include  <stdio.h>
+#include <stdio.h>
 
-#include "pico/stdlib.h" // sleep_ms
+#include "pico/stdlib.h"
 #include "utility.h"
 
+/** @brief Set the reverse-brake signal direction without redundant writes. */
 static void bi_set_dir(motor_bi_t *m, int8_t dir) {
     if (dir == m->last_dir) return;
 
@@ -18,7 +22,7 @@ static void bi_set_dir(motor_bi_t *m, int8_t dir) {
     m->last_dir = dir;
 }
 
-// ---- vtable methods ----
+/** @brief vtable: initialize PWM channels and arm the ESC at neutral. */
 static void bi_init(motor_t *bm) {
     motor_bi_t *m = (motor_bi_t *)(bm);
 
@@ -38,6 +42,7 @@ static void bi_init(motor_t *bm) {
 
 
 
+/** @brief vtable: set motor speed [-100, 100], handling direction switching. */
 static void bi_set_speed(motor_t *bm, int speed) {
     motor_bi_t *m = (motor_bi_t*)bm;
 
@@ -58,6 +63,7 @@ static void bi_set_speed(motor_t *bm, int speed) {
     servo_pwm_write_us(&m->throttle_pwm, thr_us);
 }
 
+/** @brief vtable: coast to stop and reset direction to neutral. */
 static void bi_stop(motor_t *bm) {
     motor_bi_t *m = (motor_bi_t *)(bm);
     bi_set_dir(m, 0);

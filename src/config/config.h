@@ -1,8 +1,7 @@
-// =============================================================================
-// Monster Book of Monsters - Central Configuration
-// All hardware pins, settings, and tunables in one place
-// =============================================================================
-
+/**
+ * @file config.h
+ * @brief Central configuration — all hardware pins, motor settings, and tunables.
+ */
 #ifndef CONFIG_H
 #define CONFIG_H
 

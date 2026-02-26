@@ -1,7 +1,7 @@
-/*
- * Wi-Fi Access Point Implementation
- * Based on pico-examples access_point
-*/
+/**
+ * @file wifi_ap.c
+ * @brief CYW43 Wi-Fi access-point implementation (based on pico-examples access_point).
+ */
 
 #include "wifi_ap.h"
 #include <stdio.h>

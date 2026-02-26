@@ -1,7 +1,7 @@
-//
-// Created by griffty on 2/19/26.
-//
-// motor_servo_pwm.c
+/**
+ * @file motor_pwm_control.c
+ * @brief 50 Hz servo-style PWM implementation for ESC signal lines.
+ */
 #include "motor_pwm_control.h"
 
 #ifndef UNIT_TESTING

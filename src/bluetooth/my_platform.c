@@ -1,3 +1,10 @@
+/**
+ * @file my_platform.c
+ * @brief Bluepad32 custom platform — Xbox controller mapping and robot state machine.
+ *
+ * Implements the `uni_platform` callbacks that bridge Bluepad32 events to the
+ * motor controller and web server.
+ */
 #include <string.h>
 #include <stdio.h>
 
@@ -31,7 +38,10 @@ static bool prev_xbox_pressed = false;
 
 
 /**
- * left stick Y = left motor, right stick Y = right motor, right trigger = weapon speed , Xbox button (system button) → emergency stop
+ * @brief Map gamepad axes to tank-drive and weapon commands.
+ *
+ * Left stick Y → left motor, right stick Y → right motor,
+ * right trigger → weapon speed, Xbox button → emergency stop toggle.
  */
 static void process_controller_input(uni_gamepad_t *gp) {
     if (motor_ctrl.state == initializing) {
@@ -163,6 +173,7 @@ static void my_platform_on_device_connected(uni_hid_device_t *d) {
 }
 
 
+/** @brief Emergency-stop all motors and resume scanning on controller disconnect. */
 static void my_platform_on_device_disconnected(uni_hid_device_t *d) {
     printf("\n");
     printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
@@ -193,11 +204,13 @@ static uni_error_t my_platform_on_device_ready(uni_hid_device_t *d) {
     return UNI_ERROR_SUCCESS;
 }
 
+/** @brief Property getter — returns NULL (no custom properties used). */
 static const uni_property_t *my_platform_get_property(uni_property_idx_t idx) {
     ARG_UNUSED(idx);
     return NULL;
 }
 
+/** @brief Out-of-band event handler — logs Bluetooth scanning state changes. */
 static void my_platform_on_oob_event(uni_platform_oob_event_t event, void *data) {
     if (event == UNI_PLATFORM_OOB_BLUETOOTH_ENABLED) {
         printf("Bluetooth scanning: %s\n", (bool) (data) ? "on" : "off");
@@ -208,6 +221,7 @@ static void my_platform_on_oob_event(uni_platform_oob_event_t event, void *data)
 // INPUT DISPLAY (for debugging)
 // =============================================================================
 
+/** @brief Print pressed button names to stdout (debug helper). */
 static void print_buttons(uint32_t buttons, uint8_t misc_buttons) {
     printf("Buttons: ");
 
@@ -230,6 +244,7 @@ static void print_buttons(uint32_t buttons, uint8_t misc_buttons) {
     }
 }
 
+/** @brief Convert a d-pad bitmask to a human-readable string (debug helper). */
 static const char *dpad_to_string(uint8_t dpad) {
     switch (dpad) {
         case 0: return "none";

@@ -1,13 +1,13 @@
-//
-// Created by griffty on 2/19/26.
-//
-
+/**
+ * @file motor_omni.c
+ * @brief Unidirectional (omni/weapon) ESC motor driver implementation.
+ */
 #include <stdio.h>
 #include "motor_omni.h"
 
 #include "utility.h"
 
-// ---- vtable methods ----
+/** @brief vtable: initialize PWM and arm the ESC at minimum pulse. */
 static void omni_init(motor_t *bm) {
     motor_omni_t *m = (motor_omni_t *)(bm);
 
@@ -18,6 +18,7 @@ static void omni_init(motor_t *bm) {
            m->pwm.gpio, m->pwm.slice, m->pwm.chan, m->min_us, m->max_us);
 }
 
+/** @brief vtable: set motor speed [0, 100], mapped to min/max pulse. */
 static void omni_set_speed(motor_t *bm, int speed) {
     motor_omni_t *m = (motor_omni_t *)(bm);
 
@@ -25,6 +26,7 @@ static void omni_set_speed(motor_t *bm, int speed) {
     servo_pwm_write_us(&m->pwm, us);
 }
 
+/** @brief vtable: pulse back to minimum (safe off). */
 static void omni_stop(motor_t *bm) {
     motor_omni_t *m = (motor_omni_t *)(bm);
     servo_pwm_write_us(&m->pwm, m->min_us);
