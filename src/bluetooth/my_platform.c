@@ -116,6 +116,9 @@ static void my_platform_on_init_complete(void) {
     // Initialize web server (Wi-Fi AP already started in main.c)
     wifi_ap_init();
 
+    //Initialized the fan with default state "OFF".
+    fan_init();
+
     printf("web_server_init...\n");
     if (!web_server_init(&motor_ctrl)) {
         printf("FATAL: Failed to initialize web server!\n");
