@@ -10,9 +10,10 @@
 
 #include "motor.h"
 #include "motor_pwm_control.h"
+#include "config.h"
 
-#define MAX_PWM_US 1940 /**< Maximum throttle pulse width (µs). */
-#define MIN_PWM_US 1100 /**< Minimum throttle pulse width (µs). */
+#define MAX_PWM_US ESC_ABS_MAX_US /**< Maximum throttle pulse width (µs). */
+#define MIN_PWM_US ESC_ABS_MIN_US /**< Minimum throttle pulse width (µs). */
 
 /** Bidirectional motor state. `base` must remain the first field. */
 typedef struct {
