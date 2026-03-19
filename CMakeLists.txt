@@ -22,7 +22,7 @@ pico_sdk_init()
 add_executable(${PROJECT_NAME}
         src/main.c
         src/bluetooth/my_platform.c
-        src/hardware/motor_controller.c3
+        src/hardware/motor_controller.c
         src/networking/wifi_ap.c
         src/networking/web_server.c
         src/hardware/motor_pwm_control.c
