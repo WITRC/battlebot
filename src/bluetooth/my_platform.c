@@ -78,8 +78,8 @@ static void process_controller_input(uni_gamepad_t *gp) {
     }
 
     // === DRIVE CONTROL (Arcade Drive) ===
-    int forward = map_range_int(gp->axis_y, STICK_MIN, STICK_MAX, -100, 100) * THROTTLE_INVERT;
-    int turn    = map_range_int(gp->axis_x, STICK_MIN, STICK_MAX, -100, 100) * TURN_INVERT;
+    int forward = apply_expo(map_range_int(gp->axis_y, STICK_MIN, STICK_MAX, -100, 100) * THROTTLE_INVERT, DRIVE_EXPO);
+    int turn    = apply_expo(map_range_int(gp->axis_x, STICK_MIN, STICK_MAX, -100, 100) * TURN_INVERT,    DRIVE_EXPO);
     int left_speed  = forward + turn;
     int right_speed = forward - turn;
     // Clamp to [-100, 100]

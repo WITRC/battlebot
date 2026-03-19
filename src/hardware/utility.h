@@ -8,6 +8,11 @@
 #include <stdlib.h>
 #include "config.h"
 
+// math.h for powf (expo curve)
+#ifndef UNIT_TESTING
+#include <math.h>
+#endif
+
 /** @brief Clamp @p x to [@p min, @p max] (float). */
 static float clamp_f(float x, float min, float max)
 {
@@ -71,5 +76,15 @@ static int deadband(int value) {
 
 
 
+/**
+ * Apply an expo curve to an input in [-100, 100].
+ * output = (1 - expo) * x + expo * x^3  (normalized, then scaled back)
+ * expo=0.0 → linear; expo=1.0 → full cubic.
+ */
+static int apply_expo(int value, float expo) {
+    float x = value / 100.0f;           // normalize to [-1, 1]
+    float y = (1.0f - expo) * x + expo * x * x * x;
+    return (int)(y * 100.0f);           // scale back to [-100, 100]
+}
 
 #endif //MONSTER_BOOK_UTILITY_H

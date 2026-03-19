@@ -97,6 +97,10 @@
 #define THROTTLE_INVERT  -1  // Push forward = forward (Y axis inverted)
 #define TURN_INVERT       1  // Push right = turn right
 
+// Expo curve for drive inputs (0.0 = linear, 1.0 = full cubic)
+// Higher value = less sensitive around center, same max power at full stick
+#define DRIVE_EXPO  0.4f
+
 // =============================================================================
 // DEBUG SETTINGS
 // =============================================================================
