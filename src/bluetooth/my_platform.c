@@ -77,9 +77,16 @@ static void process_controller_input(uni_gamepad_t *gp) {
         return;
     }
 
-    // === DRIVE CONTROL ===
-    int left_speed = map_range_int(gp->axis_y, STICK_MIN, STICK_MAX, -100, 100) * THROTTLE_INVERT;
-    int right_speed = map_range_int(gp->axis_ry, STICK_MIN, STICK_MAX, -100, 100) * THROTTLE_INVERT;
+    // === DRIVE CONTROL (Arcade Drive) ===
+    int forward = map_range_int(gp->axis_y, STICK_MIN, STICK_MAX, -100, 100) * THROTTLE_INVERT;
+    int turn    = map_range_int(gp->axis_x, STICK_MIN, STICK_MAX, -100, 100) * TURN_INVERT;
+    int left_speed  = forward + turn;
+    int right_speed = forward - turn;
+    // Clamp to [-100, 100]
+    if (left_speed  >  100) left_speed  =  100;
+    if (left_speed  < -100) left_speed  = -100;
+    if (right_speed >  100) right_speed =  100;
+    if (right_speed < -100) right_speed = -100;
     motor_controller_tank_drive(&motor_ctrl, left_speed, right_speed);
 
     // === WEAPON CONTROL ===
@@ -123,9 +130,9 @@ static void my_platform_on_init_complete(void) {
     }
 
     printf("\n");
-    printf("Controls (Tank Drive):\n");
-    printf("  Left Stick Y  : Left motor\n");
-    printf("  Right Stick Y : Right motor\n");
+    printf("Controls (Arcade Drive):\n");
+    printf("  Left Stick Y  : Forward / Reverse\n");
+    printf("  Left Stick X  : Turn left / right\n");
     printf("  Right Trigger : Weapon speed\n");
     printf("  Xbox Button   : Emergency stop\n");
     printf("\n");
