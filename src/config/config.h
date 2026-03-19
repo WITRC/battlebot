@@ -47,9 +47,18 @@
 #define FAILSAFE_ENABLED    true
 #define FAILSAFE_TIMEOUT_MS 2000    // Time without commands before triggering failsafe
 
+/*
+PWM pulse widths in microseconds
+
+The ESC uses 50 Hz servo-style PWM (one pulse every 20ms), and it interprets the pulse width as a throttle command:
+  - 1100 µs → stopped / neutral
+  - 1940 µs → full speed
+
+This is the standard RC servo/ESC protocol (typically 1000–2000 µs range). No relation to voltage.
+*/
 // Safety limits (absolute min/max to prevent ESC damage)
-#define ESC_ABS_MIN_US      900
-#define ESC_ABS_MAX_US      2100
+#define ESC_ABS_MIN_US      1100
+#define ESC_ABS_MAX_US      1940
 
 // Low battery cutoff (disable if no battery sensor connected)
 #define ENABLE_LOW_BATTERY_CUTOFF  false
@@ -99,7 +108,7 @@
 
 // Expo curve for drive inputs (0.0 = linear, 1.0 = full cubic)
 // Higher value = less sensitive around center, same max power at full stick
-#define DRIVE_EXPO  0.4f
+#define DRIVE_EXPO  0.6f
 
 // =============================================================================
 // DEBUG SETTINGS
