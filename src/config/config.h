@@ -38,7 +38,12 @@
 
 // Motor Behavior
 #define MOTOR_MAX_SPEED     100     // Maximum speed percentage
-#define MOTOR_DEADBAND      10      // Ignore inputs below this %
+#define MOTOR_DEADBAND      7       // Ignore inputs below this %
+
+// Ramping (% per controller update, ~100Hz)
+// Higher = faster response, lower = smoother
+#define MOTOR_RAMP_UP       5       // Max speed increase per update
+#define MOTOR_RAMP_DOWN     10      // Max speed decrease per update (brake faster than accelerate)
 
 // =============================================================================
 // SAFETY SETTINGS
@@ -59,6 +64,10 @@ This is the standard RC servo/ESC protocol (typically 1000–2000 µs range). No
 // Safety limits (absolute min/max to prevent ESC damage)
 #define ESC_ABS_MIN_US      1100
 #define ESC_ABS_MAX_US      1940
+
+// Operational drive range (inset from abs limits for smoother start/stop)
+#define ESC_DRIVE_MIN_US    1150
+#define ESC_DRIVE_MAX_US    1850
 
 // Low battery cutoff (disable if no battery sensor connected)
 #define ENABLE_LOW_BATTERY_CUTOFF  false
@@ -106,9 +115,14 @@ This is the standard RC servo/ESC protocol (typically 1000–2000 µs range). No
 #define THROTTLE_INVERT  -1  // Push forward = forward (Y axis inverted)
 #define TURN_INVERT       1  // Push right = turn right
 
-// Expo curve for drive inputs (0.0 = linear, 1.0 = full cubic)
-// Higher value = less sensitive around center, same max power at full stick
+// Expo curve for forward/back input (0.0 = linear, 1.0 = full cubic)
 #define DRIVE_EXPO  0.6f
+
+// Expo curve for turn input — higher = more dead zone around center
+#define TURN_EXPO   0.8f
+
+// Scale factor for turn input (0.0 = no turn, 1.0 = full authority)
+#define TURN_SCALE  0.3f
 
 // =============================================================================
 // DEBUG SETTINGS

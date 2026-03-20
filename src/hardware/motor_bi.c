@@ -84,8 +84,8 @@ void motor_bi_ctor(motor_bi_t *m,
     m->throttle_pwm.gpio = throttle_gpio;
     m->reverse_pwm.gpio  = reverse_gpio;
 
-    m->thr_min_us = MIN_PWM_US;
-    m->thr_max_us = MAX_PWM_US;
+    m->thr_min_us = ESC_DRIVE_MIN_US;
+    m->thr_max_us = ESC_DRIVE_MAX_US;
 
     m->rev_fwd_us = MIN_PWM_US;
     m->rev_rev_us = MAX_PWM_US;

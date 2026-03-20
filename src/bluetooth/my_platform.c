@@ -79,14 +79,16 @@ static void process_controller_input(uni_gamepad_t *gp) {
 
     // === DRIVE CONTROL (Arcade Drive) ===
     int forward = apply_expo(map_range_int(gp->axis_y, STICK_MIN, STICK_MAX, -100, 100) * THROTTLE_INVERT, DRIVE_EXPO);
-    int turn    = apply_expo(map_range_int(gp->axis_x, STICK_MIN, STICK_MAX, -100, 100) * TURN_INVERT,    DRIVE_EXPO);
+    int turn    = (int)(apply_expo(map_range_int(gp->axis_x, STICK_MIN, STICK_MAX, -100, 100) * TURN_INVERT, TURN_EXPO) * TURN_SCALE);
     int left_speed  = forward + turn;
     int right_speed = forward - turn;
-    // Clamp to [-100, 100]
-    if (left_speed  >  100) left_speed  =  100;
-    if (left_speed  < -100) left_speed  = -100;
-    if (right_speed >  100) right_speed =  100;
-    if (right_speed < -100) right_speed = -100;
+    // Proportional scaling: if either motor exceeds 100, scale both down together
+    // to preserve the turn ratio instead of hard-clamping one side
+    int max_val = abs(left_speed) > abs(right_speed) ? abs(left_speed) : abs(right_speed);
+    if (max_val > 100) {
+        left_speed  = left_speed  * 100 / max_val;
+        right_speed = right_speed * 100 / max_val;
+    }
     motor_controller_tank_drive(&motor_ctrl, left_speed, right_speed);
 
     // === WEAPON CONTROL ===

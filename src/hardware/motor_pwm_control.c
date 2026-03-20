@@ -3,6 +3,7 @@
  * @brief 50 Hz servo-style PWM implementation for ESC signal lines.
  */
 #include "motor_pwm_control.h"
+#include "config.h"
 
 #ifndef UNIT_TESTING
 #include "hardware/pwm.h"
@@ -29,5 +30,7 @@ void servo_pwm_init_50hz_1mhz(motor_pwm_t *s, uint gpio) {
 }
 
 void servo_pwm_write_us(motor_pwm_t *s, uint16_t us) {
+    if (us < ESC_ABS_MIN_US) us = ESC_ABS_MIN_US;
+    if (us > ESC_ABS_MAX_US) us = ESC_ABS_MAX_US;
     pwm_set_chan_level(s->slice, s->chan, us);
 }
