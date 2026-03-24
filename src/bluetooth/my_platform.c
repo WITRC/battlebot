@@ -18,6 +18,7 @@
 #include "motor_controller.h" // Motor control
 #include "wifi_ap.h"          // WiFi access point
 #include "web_server.h"       // HTTP dashboard
+#include "hardware/imu.h"     // IMU sensor driver
 
 // Sanity check - Pico W requires custom platform mode
 #ifndef CONFIG_BLUEPAD32_PLATFORM_CUSTOM
@@ -95,11 +96,30 @@ static void check_arming_countdown(void) {
 static bool arming_timer_callback(struct repeating_timer *t) {
     (void)t;
 
+    /*if(imu_update()){
+        IMUData data = imu_get_data();
+        printf("Roll = %.2f, Pitch = %.2f, Yaw = %.2f\n", data.roll, data.pitch, data.yaw);
+        printf("Accel = (%.2f, %.2f, %.2f) m/s²\n", data.accel_x, data.accel_y, data.accel_z);
+    }*/
+
+    /*imu_update();
+    IMUData data = imu_get_data();
+    printf("[IMU DEBUG] Roll: %.2f Pitch: %.2f Yaw: %.2f Accel Z: %.3f\n", data.roll, data.pitch, data.yaw, data.accel_z);*/
+
+    cyw43_arch_poll();
+    check_arming_countdown();
+
+    // temporary raw byte debug - remove once working
+    if(uart_is_readable(uart1)){
+        uint8_t byte = uart_getc(uart1);
+        printf("[RAW] 0x%02X\n", byte);
+        
+    }
     // Poll CYW43 to process WiFi/lwIP packets (DHCP, HTTP, etc.)
     // This is needed because btstack_run_loop_execute() may not service lwIP
-    cyw43_arch_poll();
+    //cyw43_arch_poll();
 
-    check_arming_countdown();
+    //check_arming_countdown();
     return true;  // Keep repeating
 }
 
@@ -165,6 +185,11 @@ static void my_platform_on_init_complete(void) {
     printf("  %s - Ready!\n", ROBOT_NAME);
     printf("==================================================\n");
     printf("\n");
+
+    //IMU initialization
+    printf("Initializing IMU...\n");
+    imu_init();
+    printf("IMU initialized\n");
 
     // Initialize motor controller now that hardware is ready
     motor_controller_init(&g_motors);
