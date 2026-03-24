@@ -54,6 +54,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
         pico_btstack_cyw43
         hardware_pwm
         hardware_adc
+	hardware_i2c
         bluepad32
 )
 
