@@ -1,5 +1,5 @@
-#ifndef _PICO_BTSTACK_BTSTACK_CONFIG_H
-#define _PICO_BTSTACK_BTSTACK_CONFIG_H
+#ifndef PICO_BTSTACK_BTSTACK_CONFIG_H
+#define PICO_BTSTACK_BTSTACK_CONFIG_H
 
 // BTstack features that can be enabled
 #define ENABLE_LOG_INFO

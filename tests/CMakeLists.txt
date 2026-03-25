@@ -29,8 +29,7 @@ set(MOCK_SRC
 
 # Source files under test
 set(SOURCE_UNDER_TEST
-    ${CMAKE_CURRENT_SOURCE_DIR}/../src/hardware/motor.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/../src/hardware/motor_controller.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/../src/hardware/motor_controller.c
 )
 
 # Test files

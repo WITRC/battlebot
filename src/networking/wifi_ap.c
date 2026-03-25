@@ -1,7 +1,7 @@
-// =============================================================================
-// WiFi Access Point Implementation
-// Based on pico-examples access_point
-// =============================================================================
+/**
+ * @file wifi_ap.c
+ * @brief CYW43 Wi-Fi access-point implementation (based on pico-examples access_point).
+ */
 
 #include "wifi_ap.h"
 #include <stdio.h>
@@ -9,14 +9,11 @@
 #include "pico/stdlib.h"
 #include "pico/cyw43_arch.h"
 #include "lwip/netif.h"
-#include "dhcpserver.h"
 
-// DHCP server instance
-static dhcp_server_t g_dhcp_server;
 static bool g_ap_active = false;
 
 bool wifi_ap_init(void) {
-    printf("Starting WiFi Access Point...\n");
+    printf("Starting Wi-Fi Access Point...\n");
     printf("  SSID: %s\n", WIFI_AP_SSID);
     printf("  Password: %s\n", WIFI_AP_PASSWORD);
 
@@ -47,13 +44,9 @@ bool wifi_ap_init(void) {
         nif = nif->next;
     }
 
-    // Start DHCP server
-    dhcp_server_init(&g_dhcp_server, &gw, &mask);
-    printf("  DHCP server started (listening on port 67)\n");
-
     g_ap_active = true;
 
-    printf("WiFi AP ready!\n");
+    printf("Wi-Fi AP ready!\n");
     printf("  Connect to: %s\n", WIFI_AP_SSID);
     printf("  Browse to: http://%s/\n", WIFI_AP_IP);
 
@@ -74,9 +67,8 @@ int wifi_ap_get_client_count(void) {
 
 void wifi_ap_stop(void) {
     if (g_ap_active) {
-        dhcp_server_deinit(&g_dhcp_server);
         cyw43_arch_disable_ap_mode();
         g_ap_active = false;
-        printf("WiFi AP stopped\n");
+        printf("Wi-Fi AP stopped\n");
     }
 }

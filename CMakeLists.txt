@@ -20,23 +20,23 @@ set(CMAKE_CXX_STANDARD 17)
 pico_sdk_init()
 
 add_executable(${PROJECT_NAME}
-    src/main.c
-    src/bluetooth/my_platform.c
-    src/hardware/motor.c
-    src/hardware/motor_controller.c
-    src/networking/wifi_ap.c
-    src/networking/web_server.c
-    src/networking/dhcpserver/dhcpserver.c
+        src/main.c
+        src/bluetooth/my_platform.c
+        src/hardware/motor_controller.c
+        src/networking/wifi_ap.c
+        src/networking/web_server.c
+        src/hardware/motor_pwm_control.c
+        src/hardware/motor_omni.c
+        src/hardware/motor_bi.c
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
-    src
-    src/config
-    src/hardware
-    src/networking
-    src/networking/dhcpserver
-    src/bluetooth
-    ${BLUEPAD32_ROOT}/src/components/bluepad32/include
+        src
+        src/config
+        src/hardware
+        src/networking
+        src/bluetooth
+        ${BLUEPAD32_ROOT}/src/components/bluepad32/include
 )
 
 # Needed for btstack_config.h / sdkconfig.h
@@ -48,13 +48,13 @@ include_directories(${BTSTACK_ROOT}/3rd-party/bluedroid/decoder/include)
 include_directories(${BTSTACK_ROOT}/src)
 
 target_link_libraries(${PROJECT_NAME} PUBLIC
-    pico_stdlib
-    pico_cyw43_arch_lwip_threadsafe_background
-    pico_btstack_classic
-    pico_btstack_cyw43
-    hardware_pwm
-    hardware_adc
-    bluepad32
+        pico_stdlib
+        pico_cyw43_arch_lwip_threadsafe_background
+        pico_btstack_classic
+        pico_btstack_cyw43
+        hardware_pwm
+        hardware_adc
+        bluepad32
 )
 
 add_subdirectory(${BLUEPAD32_ROOT}/src/components/bluepad32 libbluepad32)

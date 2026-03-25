@@ -1,8 +1,7 @@
-// =============================================================================
-// Monster Book of Monsters - Central Configuration
-// All hardware pins, settings, and tunables in one place
-// =============================================================================
-
+/**
+ * @file config.h
+ * @brief Central configuration — all hardware pins, motor settings, and tunables.
+ */
 #ifndef CONFIG_H
 #define CONFIG_H
 
@@ -19,9 +18,11 @@
 // =============================================================================
 
 // ESC Motor Pins (PWM signal to ESC)
-#define PIN_MOTOR_LEFT         0   // GP0 - Left drive motor
-#define PIN_MOTOR_RIGHT        1   // GP1 - Right drive motor
-#define PIN_WEAPON             4   // GP4 - Weapon motor
+#define PIN_MOTOR_TRH_LEFT         0   // GP0 - Left drive motor
+#define PIN_MOTOR_REV_LEFT         1   // GP0 - Left drive motor
+#define PIN_MOTOR_TRH_RIGHT         2   // GP0 - Left drive motor
+#define PIN_MOTOR_REV_RIGHT        3   // GP0 - Left drive motor
+#define PIN_WEAPON             4   // GP2 - Weapon motor
 
 // Analog Inputs
 #define PIN_BATTERY_ADC  26  // ADC0 - Battery voltage divider
@@ -35,32 +36,38 @@
 // ESC PWM Configuration (50Hz servo-style)
 #define MOTOR_PWM_FREQ      50      // Hz
 
-// ESC Pulse Width Timing (microseconds)
-#define DRIVE_MIN_US        1000    // Full reverse / idle
-#define DRIVE_MID_US        1500    // Stopped (for bidirectional)
-#define DRIVE_MAX_US        2000    // Full forward
-#define WEAPON_MIN_US       1000
-#define WEAPON_MID_US       1500
-#define WEAPON_MAX_US       2000
-
-#define ARM_SEQUENCE_ONE    1480
-#define ARM_SEQUENCE_TWO    1550
-#define ARM_SEQUENCE_ONE_DELAY  5000
-#define ARM_SEQUENCE_TWO_DELAY  2000
-
 // Motor Behavior
-#define MOTOR_BIDIRECTIONAL true   // Try unidirectional arming
-#define MOTOR_INVERT_SIGNAL false   // No inverting transistor on GPIO 0
 #define MOTOR_MAX_SPEED     100     // Maximum speed percentage
-#define MOTOR_DEADBAND      10      // Ignore inputs below this %
+#define MOTOR_DEADBAND      7       // Ignore inputs below this %
+
+// Ramping (% per controller update, ~100Hz)
+// Higher = faster response, lower = smoother
+#define MOTOR_RAMP_UP       5       // Max speed increase per update
+#define MOTOR_RAMP_DOWN     10      // Max speed decrease per update (brake faster than accelerate)
 
 // =============================================================================
 // SAFETY SETTINGS
 // =============================================================================
 
-// Failsafe - stops motors if no controller input
-#define FAILSAFE_ENABLED     true
-#define FAILSAFE_TIMEOUT_MS  500    // Stop if no command for this long
+#define FAILSAFE_ENABLED    true
+#define FAILSAFE_TIMEOUT_MS 2000    // Time without commands before triggering failsafe
+
+/*
+PWM pulse widths in microseconds
+
+The ESC uses 50 Hz servo-style PWM (one pulse every 20ms), and it interprets the pulse width as a throttle command:
+  - 1100 µs → stopped / neutral
+  - 1940 µs → full speed
+
+This is the standard RC servo/ESC protocol (typically 1000–2000 µs range). No relation to voltage.
+*/
+// Safety limits (absolute min/max to prevent ESC damage)
+#define ESC_ABS_MIN_US      1100
+#define ESC_ABS_MAX_US      1940
+
+// Operational drive range (inset from abs limits for smoother start/stop)
+#define ESC_DRIVE_MIN_US    1150
+#define ESC_DRIVE_MAX_US    1850
 
 // Low battery cutoff (disable if no battery sensor connected)
 #define ENABLE_LOW_BATTERY_CUTOFF  false
@@ -77,7 +84,7 @@
 #define BATTERY_ADC_RATIO       5.7f    // Voltage divider ratio
 
 // =============================================================================
-// WIFI SETTINGS
+// Wi-Fi SETTINGS
 // =============================================================================
 
 #define WIFI_AP_SSID      "Monster Book of Monsters"
@@ -107,6 +114,15 @@
 // Invert controls if needed (-1 to invert, 1 for normal)
 #define THROTTLE_INVERT  -1  // Push forward = forward (Y axis inverted)
 #define TURN_INVERT       1  // Push right = turn right
+
+// Expo curve for forward/back input (0.0 = linear, 1.0 = full cubic)
+#define DRIVE_EXPO  0.6f
+
+// Expo curve for turn input — higher = more dead zone around center
+#define TURN_EXPO   0.8f
+
+// Scale factor for turn input (0.0 = no turn, 1.0 = full authority)
+#define TURN_SCALE  0.3f
 
 // =============================================================================
 // DEBUG SETTINGS

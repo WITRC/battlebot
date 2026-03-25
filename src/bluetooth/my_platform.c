@@ -1,12 +1,12 @@
-// =============================================================================
-// BattleBot Controller for Pico 2 W
-// Xbox controller via Bluetooth → Motor control via PWM
-// =============================================================================
-
-#include <stddef.h>
+/**
+ * @file my_platform.c
+ * @brief Bluepad32 custom platform — Xbox controller mapping and robot state machine.
+ *
+ * Implements the `uni_platform` callbacks that bridge Bluepad32 events to the
+ * motor controller and web server.
+ */
 #include <string.h>
 #include <stdio.h>
-#include <stdlib.h>
 
 #include <pico/stdlib.h>      // For to_ms_since_boot
 #include <pico/cyw43_arch.h>  // For controlling the onboard LED
@@ -16,9 +16,9 @@
 #include "config.h"           // Central configuration
 #include "sdkconfig.h"        // Bluepad32 configuration
 #include "motor_controller.h" // Motor control
-#include "wifi_ap.h"          // WiFi access point
+#include "utility.h"
 #include "web_server.h"       // HTTP dashboard
-#include "hardware/imu.h"     // IMU sensor driver
+#include "wifi_ap.h"
 
 // Sanity check - Pico W requires custom platform mode
 #ifndef CONFIG_BLUEPAD32_PLATFORM_CUSTOM
@@ -28,139 +28,72 @@
 // =============================================================================
 // GLOBAL STATE
 // =============================================================================
-
-// Motor controller instance (initialized when Bluetooth is ready)
-static motor_controller_t g_motors;
-static bool g_motors_initialized = false;
-
-// Previous button state for edge detection (arm/disarm toggle)
-static uint32_t g_prev_buttons = 0;
-static uint8_t g_prev_misc_buttons = 0;
-
-// Arming requires holding Y for 5 seconds
-#define ARM_HOLD_TIME_MS  5000
-#define ARM_LOCKOUT_MS    1000  // Ignore Y presses for 1s after arming
-static uint32_t g_arm_hold_start = 0;
-static uint32_t g_arm_complete_time = 0;  // When arming finished
-static bool g_arm_hold_active = false;
-static int g_last_countdown = -1;  // Track last printed countdown number
-static bool g_y_held = false;  // Track if Y is currently held
-
-// Timer for arming countdown (runs independently of controller input)
-static struct repeating_timer g_arming_timer;
-
+// platform states
+static motor_controller_t motor_ctrl;
+static bool xbox_pressed = false;
+static bool prev_xbox_pressed = false;
 // =============================================================================
 // CONTROL MAPPING
-// Map Xbox controller inputs to robot actions (see config.h for settings)
 // =============================================================================
 
-/**
- * Map a value from one range to another.
- */
-static int map_range(int value, int in_min, int in_max, int out_min, int out_max) {
-    return (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-}
 
 /**
- * Check arming countdown - called periodically even when no input changes.
- * This ensures the countdown progresses while holding buttons.
+ * @brief Map gamepad axes to tank-drive and weapon commands.
+ *
+ * Left stick Y → left motor, right stick Y → right motor,
+ * right trigger → weapon speed, Xbox button → emergency stop toggle.
  */
-static void check_arming_countdown(void) {
-    if (!g_motors_initialized) return;
-
-    uint32_t now = to_ms_since_boot(get_absolute_time());
-
-    if (g_y_held && g_arm_hold_active && !motor_controller_is_weapon_armed(&g_motors)) {
-        uint32_t held_time = now - g_arm_hold_start;
-        int seconds_left = (ARM_HOLD_TIME_MS - held_time + 999) / 1000;  // Round up
-
-        if (held_time >= ARM_HOLD_TIME_MS) {
-            motor_controller_arm_weapon(&g_motors);
-            g_arm_complete_time = now;  // Start lockout period
-            g_last_countdown = -1;
-        } else if (seconds_left != g_last_countdown && seconds_left >= 0) {
-            g_last_countdown = seconds_left;
-            if (seconds_left == 0) {
-                printf(">>> ARMING! <<<\n");
-            } else {
-                printf("  %d...\n", seconds_left);
-            }
-        }
-    }
-}
-
-/**
- * Timer callback for arming countdown - fires every 100ms.
- * Also polls CYW43 to ensure WiFi/lwIP packets get processed.
- */
-static bool arming_timer_callback(struct repeating_timer *t) {
-    (void)t;
-
-    /*if(imu_update()){
-        IMUData data = imu_get_data();
-        printf("Roll = %.2f, Pitch = %.2f, Yaw = %.2f\n", data.roll, data.pitch, data.yaw);
-        printf("Accel = (%.2f, %.2f, %.2f) m/s²\n", data.accel_x, data.accel_y, data.accel_z);
-    }*/
-
-    /*imu_update();
-    IMUData data = imu_get_data();
-    printf("[IMU DEBUG] Roll: %.2f Pitch: %.2f Yaw: %.2f Accel Z: %.3f\n", data.roll, data.pitch, data.yaw, data.accel_z);*/
-
-    cyw43_arch_poll();
-    check_arming_countdown();
-
-    // temporary raw byte debug - remove once working
-    if(uart_is_readable(uart1)){
-        uint8_t byte = uart_getc(uart1);
-        printf("[RAW] 0x%02X\n", byte);
-        
-    }
-    // Poll CYW43 to process WiFi/lwIP packets (DHCP, HTTP, etc.)
-    // This is needed because btstack_run_loop_execute() may not service lwIP
-    //cyw43_arch_poll();
-
-    //check_arming_countdown();
-    return true;  // Keep repeating
-}
-
-/**
- * Process controller input and drive motors.
- * Uses tank drive: left stick Y = left motor, right stick Y = right motor
- */
-static void process_controller_input(uni_gamepad_t* gp) {
-    if (!g_motors_initialized) {
+static void process_controller_input(uni_gamepad_t *gp) {
+    if (motor_ctrl.state == initializing) {
+        printf("Cannot process input while initializing");
         return;
     }
 
-    // === DRIVE CONTROL ===
-    // Tank drive: each stick controls one side
-    // Left stick Y axis → left motor
-    // Right stick Y axis → right motor
-    int left_speed = map_range(gp->axis_y, STICK_MIN, STICK_MAX, -100, 100) * THROTTLE_INVERT;
-    int right_speed = map_range(gp->axis_ry, STICK_MIN, STICK_MAX, -100, 100) * THROTTLE_INVERT;
-
-    motor_controller_tank_drive(&g_motors, left_speed, right_speed);
-
-    // === WEAPON CONTROL ===
-    // Right trigger → weapon speed (only if armed)
-    int weapon_speed = map_range(gp->throttle, 0, TRIGGER_MAX, 0, 100);
-    motor_controller_set_weapon(&g_motors, weapon_speed);
-
-    // === WEAPON ACTIVE (no arming required) ===
-
     // === EMERGENCY STOP ===
-    // Xbox button (system button) → emergency stop all
-    bool xbox_pressed = (gp->misc_buttons & MISC_BUTTON_SYSTEM) != 0;
-    bool xbox_was_pressed = (g_prev_misc_buttons & MISC_BUTTON_SYSTEM) != 0;
+    xbox_pressed = (gp->misc_buttons & MISC_BUTTON_SYSTEM) != 0;
 
-    if (xbox_pressed && !xbox_was_pressed) {
-        printf("!!! EMERGENCY STOP !!!\n");
-        motor_controller_stop_all(&g_motors);
+    if (xbox_pressed && !prev_xbox_pressed) {
+        if (motor_ctrl.state == active) {
+            motor_ctrl.state = stopped;
+            printf("EMERGENCY STOP ACTIVATED!\n");
+            motor_controller_stop_all(&motor_ctrl);
+        } else if (motor_ctrl.state == stopped) {
+            printf("Resuming normal operation...\n");
+            motor_ctrl.state = active;
+        }
     }
 
-    // Update previous button state for next iteration
-    g_prev_buttons = gp->buttons;
-    g_prev_misc_buttons = gp->misc_buttons;
+    cyw43_arch_poll();
+    if (motor_controller_check_failsafe(&motor_ctrl)) {
+        //todo: doesn't work
+        return;
+    }
+
+
+    prev_xbox_pressed = xbox_pressed;
+
+    if (motor_ctrl.state == stopped) {
+        printf(">>> Controller input received but currently stopped. Press Xbox button to resume.\n");
+        return;
+    }
+
+    // === DRIVE CONTROL (Arcade Drive) ===
+    int forward = apply_expo(map_range_int(gp->axis_y, STICK_MIN, STICK_MAX, -100, 100) * THROTTLE_INVERT, DRIVE_EXPO);
+    int turn    = (int)(apply_expo(map_range_int(gp->axis_x, STICK_MIN, STICK_MAX, -100, 100) * TURN_INVERT, TURN_EXPO) * TURN_SCALE);
+    int left_speed  = forward + turn;
+    int right_speed = forward - turn;
+    // Proportional scaling: if either motor exceeds 100, scale both down together
+    // to preserve the turn ratio instead of hard-clamping one side
+    int max_val = abs(left_speed) > abs(right_speed) ? abs(left_speed) : abs(right_speed);
+    if (max_val > 100) {
+        left_speed  = left_speed  * 100 / max_val;
+        right_speed = right_speed * 100 / max_val;
+    }
+    motor_controller_tank_drive(&motor_ctrl, left_speed, right_speed);
+
+    // === WEAPON CONTROL ===
+    int weapon_speed = map_range_int(gp->throttle, 0, TRIGGER_MAX, 0, 100);
+    motor_controller_weapon(&motor_ctrl, weapon_speed);
 }
 
 // =============================================================================
@@ -170,7 +103,7 @@ static void process_controller_input(uni_gamepad_t* gp) {
 /**
  * Called once when Bluepad32 initializes.
  */
-static void my_platform_init(int argc, const char** argv) {
+static void my_platform_init(int argc, const char **argv) {
     ARG_UNUSED(argc);
     ARG_UNUSED(argv);
     printf("Monster Book of Monsters - Controller initialized\n");
@@ -186,33 +119,25 @@ static void my_platform_on_init_complete(void) {
     printf("==================================================\n");
     printf("\n");
 
-    //IMU initialization
-    printf("Initializing IMU...\n");
-    imu_init();
-    printf("IMU initialized\n");
+    motor_controller_init(&motor_ctrl);
+    motor_ctrl.state = stopped; // Start in "off" state until controller is connected
 
-    // Initialize motor controller now that hardware is ready
-    motor_controller_init(&g_motors);
-    g_motors_initialized = true;
+    // Initialize web server (Wi-Fi AP already started in main.c)
+    wifi_ap_init();
 
-    // Start arming countdown timer (100ms interval)
-    add_repeating_timer_ms(100, arming_timer_callback, NULL, &g_arming_timer);
-
-    // Initialize web server (WiFi AP already started in main.c)
-    printf("\n");
-    web_server_init(&g_motors);
+    printf("web_server_init...\n");
+    if (!web_server_init(&motor_ctrl)) {
+        printf("FATAL: Failed to initialize web server!\n");
+        return;
+    }
 
     printf("\n");
-    printf("Controls (Tank Drive):\n");
-    printf("  Left Stick Y  : Left motor\n");
-    printf("  Right Stick Y : Right motor\n");
+    printf("Controls (Arcade Drive):\n");
+    printf("  Left Stick Y  : Forward / Reverse\n");
+    printf("  Left Stick X  : Turn left / right\n");
     printf("  Right Trigger : Weapon speed\n");
     printf("  Xbox Button   : Emergency stop\n");
-    // Wait for ESCs to arm (they need min throttle signal for ~3 seconds)
     printf("\n");
-    printf("Waiting for ESCs to arm...\n");
-    sleep_ms(4000);
-    printf("ESCs armed!\n");
 
     printf("\n");
     printf("Waiting for Xbox controller...\n");
@@ -222,57 +147,53 @@ static void my_platform_on_init_complete(void) {
     // Start scanning for controllers
     uni_bt_start_scanning_and_autoconnect_unsafe();
 
-    // LED off = waiting for controller
-    cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 0);
+    cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 0); // LED off = waiting for controller
 }
 
 /**
  * Called when a Bluetooth device is discovered.
  * Filter to only accept Xbox controllers.
  */
-static uni_error_t my_platform_on_device_discovered(bd_addr_t addr, const char* name, uint16_t cod, uint8_t rssi) {
-    // Allow devices with "Xbox" in name
+//todo: replace with specific device UUID (AC:8E:BD:6C:6D:CC) (not sure)
+static uni_error_t my_platform_on_device_discovered(bd_addr_t addr, const char *name, uint16_t cod, uint8_t rssi) {
     if (name != NULL && strstr(name, "Xbox") != NULL) {
+        // filter by "Xbox" in name
         printf("Xbox controller found: %s (RSSI: %d)\n", name, rssi);
         return UNI_ERROR_SUCCESS;
     }
 
-    // Also allow gamepads by Class of Device (Xbox BLE may have empty name initially)
     if ((cod & 0x050C) == 0x0508) {
+        // filter by Class of Device (Xbox BLE may have empty name initially)
         printf("Gamepad found (COD: 0x%04x, RSSI: %d)\n", cod, rssi);
         return UNI_ERROR_SUCCESS;
     }
 
-    // Ignore everything else
-    return UNI_ERROR_IGNORE_DEVICE;
+    return UNI_ERROR_IGNORE_DEVICE; // Ignore everything else
 }
 
 /**
  * Called when a controller has connected.
  */
-static void my_platform_on_device_connected(uni_hid_device_t* d) {
+static void my_platform_on_device_connected(uni_hid_device_t *d) {
     printf("Controller connected!\n");
-
-    // Stop scanning
+    motor_ctrl.state = stopped; // Set to "on" state when controller connects
     uni_bt_stop_scanning_safe();
-
-    // LED on = controller connected
-    cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);
+    cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1); // LED on = controller connected
 }
 
-/**
- * Called when a controller disconnects.
- */
-static void my_platform_on_device_disconnected(uni_hid_device_t* d) {
+
+/** @brief Emergency-stop all motors and resume scanning on controller disconnect. */
+static void my_platform_on_device_disconnected(uni_hid_device_t *d) {
     printf("\n");
     printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
     printf("!!!     CONTROLLER DISCONNECTED - E-STOP      !!!\n");
     printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
 
     // SAFETY: Emergency stop all motors immediately
-    if (g_motors_initialized) {
+    if (motor_ctrl.state != initializing) {
         printf(">>> Stopping all motors...\n");
-        motor_controller_stop_all(&g_motors);
+        motor_controller_stop_all(&motor_ctrl);
+        motor_ctrl.state = stopped; // Set to "off" state until controller reconnects
         printf(">>> All motors stopped, weapon disarmed\n");
     }
 
@@ -284,10 +205,7 @@ static void my_platform_on_device_disconnected(uni_hid_device_t* d) {
     uni_bt_start_scanning_and_autoconnect_safe();
 }
 
-/**
- * Called when a controller is fully ready to use.
- */
-static uni_error_t my_platform_on_device_ready(uni_hid_device_t* d) {
+static uni_error_t my_platform_on_device_ready(uni_hid_device_t *d) {
     printf("\n");
     printf("*** Controller ready - DRIVE ENABLED ***\n");
     printf("(Weapon ready - use right trigger)\n");
@@ -295,10 +213,24 @@ static uni_error_t my_platform_on_device_ready(uni_hid_device_t* d) {
     return UNI_ERROR_SUCCESS;
 }
 
+/** @brief Property getter — returns NULL (no custom properties used). */
+static const uni_property_t *my_platform_get_property(uni_property_idx_t idx) {
+    ARG_UNUSED(idx);
+    return NULL;
+}
+
+/** @brief Out-of-band event handler — logs Bluetooth scanning state changes. */
+static void my_platform_on_oob_event(uni_platform_oob_event_t event, void *data) {
+    if (event == UNI_PLATFORM_OOB_BLUETOOTH_ENABLED) {
+        printf("Bluetooth scanning: %s\n", (bool) (data) ? "on" : "off");
+    }
+}
+
 // =============================================================================
 // INPUT DISPLAY (for debugging)
 // =============================================================================
 
+/** @brief Print pressed button names to stdout (debug helper). */
 static void print_buttons(uint32_t buttons, uint8_t misc_buttons) {
     printf("Buttons: ");
 
@@ -321,18 +253,19 @@ static void print_buttons(uint32_t buttons, uint8_t misc_buttons) {
     }
 }
 
-static const char* dpad_to_string(uint8_t dpad) {
+/** @brief Convert a d-pad bitmask to a human-readable string (debug helper). */
+static const char *dpad_to_string(uint8_t dpad) {
     switch (dpad) {
-        case 0:                            return "none";
-        case DPAD_UP:                      return "UP";
-        case DPAD_DOWN:                    return "DOWN";
-        case DPAD_RIGHT:                   return "RIGHT";
-        case DPAD_LEFT:                    return "LEFT";
-        case (DPAD_UP | DPAD_RIGHT):       return "UP+RIGHT";
-        case (DPAD_DOWN | DPAD_RIGHT):     return "DOWN+RIGHT";
-        case (DPAD_UP | DPAD_LEFT):        return "UP+LEFT";
-        case (DPAD_DOWN | DPAD_LEFT):      return "DOWN+LEFT";
-        default:                           return "?";
+        case 0: return "none";
+        case DPAD_UP: return "UP";
+        case DPAD_DOWN: return "DOWN";
+        case DPAD_RIGHT: return "RIGHT";
+        case DPAD_LEFT: return "LEFT";
+        case (DPAD_UP | DPAD_RIGHT): return "UP+RIGHT";
+        case (DPAD_DOWN | DPAD_RIGHT): return "DOWN+RIGHT";
+        case (DPAD_UP | DPAD_LEFT): return "UP+LEFT";
+        case (DPAD_DOWN | DPAD_LEFT): return "DOWN+LEFT";
+        default: return "?";
     }
 }
 
@@ -340,59 +273,30 @@ static const char* dpad_to_string(uint8_t dpad) {
  * Called every time controller sends new input data.
  * This is the main control loop for the robot!
  */
-static void my_platform_on_controller_data(uni_hid_device_t* d, uni_controller_t* ctl) {
+static void my_platform_on_controller_data(uni_hid_device_t *d, uni_controller_t *ctl) {
     static uni_controller_t prev = {0};
-
-    // Check arming countdown (runs even when no input changes)
-    check_arming_countdown();
 
     // Only process if something changed
     if (memcmp(&prev, ctl, sizeof(*ctl)) == 0) {
-        // Even if nothing changed, check failsafe
-        if (g_motors_initialized) {
-            motor_controller_check_failsafe(&g_motors);
-        }
+        motor_controller_check_failsafe(&motor_ctrl);
         return;
     }
+
     prev = *ctl;
 
     if (ctl->klass == UNI_CONTROLLER_CLASS_GAMEPAD) {
-        uni_gamepad_t* gp = &ctl->gamepad;
+        uni_gamepad_t *gp = &ctl->gamepad;
 
-        // === MOTOR CONTROL ===
         process_controller_input(gp);
 
         // === DEBUG OUTPUT ===
-        // Print motor status along with controller state
-        int left, right, weapon;
-        bool armed;
-        motor_controller_get_status(&g_motors, &left, &right, &weapon, &armed);
-
-        printf("Motors: L=%+4d%% R=%+4d%% W=%3d%% [%s] | ",
-               left, right, weapon, armed ? "ARMED" : "safe");
-
+        printf("Motors: L=%+4d%% R=%+4d%% W=%3d%% | ",
+               motor_ctrl.left_speed, motor_ctrl.right_speed, motor_ctrl.weapon_speed);
         print_buttons(gp->buttons, gp->misc_buttons);
         printf("| DPad: %-10s", dpad_to_string(gp->dpad));
         printf("| Sticks: (%+4d,%+4d) (%+4d,%+4d)",
                gp->axis_x, gp->axis_y, gp->axis_rx, gp->axis_ry);
-        printf("| Trig: %4d %4d\n", gp->brake, gp->throttle);
-    }
-}
-
-/**
- * Called to get platform-specific properties.
- */
-static const uni_property_t* my_platform_get_property(uni_property_idx_t idx) {
-    ARG_UNUSED(idx);
-    return NULL;
-}
-
-/**
- * Called for out-of-band events.
- */
-static void my_platform_on_oob_event(uni_platform_oob_event_t event, void* data) {
-    if (event == UNI_PLATFORM_OOB_BLUETOOTH_ENABLED) {
-        printf("Bluetooth scanning: %s\n", (bool)(data) ? "on" : "off");
+        printf("| Trig: %4d %4d | State %1d\n", gp->brake, gp->throttle, motor_ctrl.state);
     }
 }
 
@@ -400,7 +304,7 @@ static void my_platform_on_oob_event(uni_platform_oob_event_t event, void* data)
 // PLATFORM REGISTRATION
 // =============================================================================
 
-struct uni_platform* get_my_platform(void) {
+struct uni_platform *get_my_platform(void) {
     static struct uni_platform plat = {
         .name = "Monster Book of Monsters",
         .init = my_platform_init,

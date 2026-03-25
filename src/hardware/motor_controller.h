@@ -1,37 +1,37 @@
-// =============================================================================
-// Motor Controller for BattleBot
-// High-level control: tank/arcade drive, weapon, failsafe, arming
-// =============================================================================
+/**
+ * @file motor_controller.h
+ * @brief High-level BattleBot motor controller.
+ *
+ * Provides tank drive, weapon control, failsafe, and arming logic on top of
+ * the low-level motor drivers.
+ */
 
 #ifndef MOTOR_CONTROLLER_H
 #define MOTOR_CONTROLLER_H
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "config.h"  // All settings centralized
 #include "motor.h"
+#include "motor_bi.h"
+#include "motor_omni.h"
 
-// =============================================================================
-// MOTOR CONTROLLER API
-// =============================================================================
+/** Operational state of the motor controller. */
+typedef enum { initializing, active, stopped } p_state;
 
-// Motor controller state
+/** Aggregate state for all drive and weapon motors. */
 typedef struct {
-    motor_t motor_left;
-    motor_t motor_right;
-    motor_t weapon;
+    motor_bi_t motor_left;   /**< Left drive motor. */
+    motor_bi_t motor_right;  /**< Right drive motor. */
+    motor_omni_t weapon;     /**< Weapon/spinner motor. */
 
-    // Current speeds (-100 to 100 for drive, 0 to 100 for weapon)
-    int left_speed;
-    int right_speed;
-    int weapon_speed;
+    int left_speed;          /**< Current left speed  [-100, 100]. */
+    int right_speed;         /**< Current right speed [-100, 100]. */
+    int weapon_speed;        /**< Current weapon speed [0, 100]. */
 
-    // Weapon arming state (weapon won't spin unless armed)
-    bool weapon_armed;
+    p_state state;
 
-    // Failsafe tracking
-    uint32_t last_command_time_ms;
-    bool failsafe_triggered;
+    uint32_t last_command_time_ms; /**< Timestamp of last received command (ms). */
+    bool failsafe_triggered;       /**< True when failsafe has fired. */
 } motor_controller_t;
 
 /**
@@ -41,50 +41,21 @@ typedef struct {
 void motor_controller_init(motor_controller_t* mc);
 
 /**
- * Set left motor speed.
- * @param speed -100 to 100 (negative = reverse if bidirectional)
- */
-void motor_controller_set_left(motor_controller_t* mc, int speed);
-
-/**
- * Set right motor speed.
- * @param speed -100 to 100 (negative = reverse if bidirectional)
- */
-void motor_controller_set_right(motor_controller_t* mc, int speed);
-
-/**
- * Tank drive control (direct left/right motor control).
+ * @brief Set left/right drive speeds for tank-style steering.
+ * @param left   Left-side speed  [-100, 100].
+ * @param right  Right-side speed [-100, 100].
  */
 void motor_controller_tank_drive(motor_controller_t* mc, int left, int right);
 
-/**
- * Arcade drive control (throttle + turn mixing).
- * @param throttle -100 to 100 (forward/back)
- * @param turn     -100 to 100 (positive = turn right)
- */
-void motor_controller_arcade_drive(motor_controller_t* mc, int throttle, int turn);
+/** @brief Set weapon motor speed. @param weapon Speed [0, 100]. */
+void motor_controller_weapon(motor_controller_t* mc, int weapon);
 
 /**
- * Set weapon speed.
- * Only works if weapon is armed!
- * @param speed 0 to 100
+ * @brief Update a single motor's speed, applying deadband/clamping.
+ * @param cSpeed  Pointer to the cached speed value to update.
+ * @param speed   Desired speed [-100, 100].
  */
-void motor_controller_set_weapon(motor_controller_t* mc, int speed);
-
-/**
- * Arm the weapon (allows it to spin).
- */
-void motor_controller_arm_weapon(motor_controller_t* mc);
-
-/**
- * Disarm the weapon (stops it and prevents spinning).
- */
-void motor_controller_disarm_weapon(motor_controller_t* mc);
-
-/**
- * Check if weapon is armed.
- */
-bool motor_controller_is_weapon_armed(motor_controller_t* mc);
+void motor_controller_set(motor_t* m, int* cSpeed, int speed);
 
 /**
  * Emergency stop - all motors to zero, weapon disarmed.
@@ -98,9 +69,7 @@ void motor_controller_stop_all(motor_controller_t* mc);
  */
 bool motor_controller_check_failsafe(motor_controller_t* mc);
 
-/**
- * Get current motor status for logging/telemetry.
- */
-void motor_controller_get_status(motor_controller_t* mc, int* left, int* right, int* weapon, bool* armed);
+/** @brief Read back the current cached speeds (out-params may be NULL). */
+void motor_controller_get_status(motor_controller_t* mc, int* left, int* right, int* weapon);
 
 #endif // MOTOR_CONTROLLER_H
