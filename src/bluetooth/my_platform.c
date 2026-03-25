@@ -14,6 +14,7 @@
 #include <uni.h>              // Bluepad32 main header
 
 #include "config.h"           // Central configuration
+#include "imu.h"
 #include "sdkconfig.h"        // Bluepad32 configuration
 #include "motor_controller.h" // Motor control
 #include "utility.h"
@@ -47,6 +48,15 @@ static void process_controller_input(uni_gamepad_t *gp) {
     if (motor_ctrl.state == initializing) {
         printf("Cannot process input while initializing");
         return;
+    }
+
+    // === PROCESS DATA ===
+    if (imu_update()) {
+        IMUData imu_data = imu_get_data();
+        printf("IMU data: ");
+        printf("%0.2f %0.2f %0.2f | %0.2f %0.2f %0.2f \n\n",
+            imu_data.accel_x, imu_data.accel_y, imu_data.accel_z,
+            imu_data.gyro_x,  imu_data.gyro_y,  imu_data.gyro_z);
     }
 
     // === EMERGENCY STOP ===
@@ -118,6 +128,8 @@ static void my_platform_on_init_complete(void) {
     printf("  %s - Ready!\n", ROBOT_NAME);
     printf("==================================================\n");
     printf("\n");
+
+    imu_init();
 
     motor_controller_init(&motor_ctrl);
     motor_ctrl.state = stopped; // Start in "off" state until controller is connected

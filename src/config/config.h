@@ -44,6 +44,7 @@
 // Higher = faster response, lower = smoother
 #define MOTOR_RAMP_UP       5       // Max speed increase per update
 #define MOTOR_RAMP_DOWN     10      // Max speed decrease per update (brake faster than accelerate)
+#define MOTOR_INTERPOLATION    0.3f    // Exponential smoothing factor for speed changes (0.0 = no smoothing, 1.0 = infinite smoothing)
 
 // =============================================================================
 // SAFETY SETTINGS

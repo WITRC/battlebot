@@ -14,10 +14,10 @@
  * **/
 //placeholder values - replace with actual pins and baud
 
-#define imu_uart uart1 
-#define imu_baud 115200
-#define imu_tx_pin 4 //IMU RX pin (connected to IMU TX)
-#define imu_rx_pin 5 //IMU TX pin (connected to IMU RX)
+#define imu_uart uart0
+#define imu_baud 9600
+#define imu_tx_pin 0 //IMU RX pin (connected to IMU TX)
+#define imu_rx_pin 1 //IMU TX pin (connected to IMU RX)
 
 //packet constants
 #define packet_start 0x55
@@ -166,6 +166,11 @@ bool imu_update(void){
             got_packet = true;
         }
     }
+
+    for (int i = 0; i < packet_length; i++){
+        printf("%02X ", buf[i]);
+    }
+
     return got_packet; //lets main.c know when fresh data arrived
 }
 
