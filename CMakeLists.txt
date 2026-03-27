@@ -65,3 +65,30 @@ pico_enable_stdio_uart(${PROJECT_NAME} 0)
 
 # create map/bin/hex/uf2 file in addition to ELF.
 pico_add_extra_outputs(${PROJECT_NAME})
+
+# =============================================================================
+# motor_test — standalone USB serial motor test (no Bluetooth / WiFi)
+# =============================================================================
+
+add_executable(motor_test
+        src/tools/motor_test_main.c
+        src/hardware/motor_pwm_control.c
+        src/hardware/motor_bi.c
+        src/hardware/motor_omni.c
+)
+
+target_include_directories(motor_test PRIVATE
+        src
+        src/config
+        src/hardware
+)
+
+target_link_libraries(motor_test PUBLIC
+        pico_stdlib
+        hardware_pwm
+)
+
+pico_enable_stdio_usb(motor_test 1)
+pico_enable_stdio_uart(motor_test 0)
+
+pico_add_extra_outputs(motor_test)
