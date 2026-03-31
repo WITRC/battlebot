@@ -29,9 +29,10 @@ static void bi_init(motor_t *bm) {
     servo_pwm_init_50hz_1mhz(&m->throttle_pwm, m->throttle_pwm.gpio);
     servo_pwm_init_50hz_1mhz(&m->reverse_pwm,  m->reverse_pwm.gpio);
 
-    // Per ESC docs: reverse channel should be in 0-50% (0% preferred) at power-on
+    // Per ESC docs: reverse channel should be in 0-50% (0% preferred) at power-on.
+    // Send absolute minimum throttle (not drive min) so ESC arms cleanly.
     servo_pwm_write_us(&m->reverse_pwm,  m->rev_fwd_us);
-    servo_pwm_write_us(&m->throttle_pwm, m->thr_min_us);
+    servo_pwm_write_us(&m->throttle_pwm, ESC_ABS_MIN_US);
 
     m->last_dir = 0;
 

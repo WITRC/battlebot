@@ -66,8 +66,8 @@ This is the standard RC servo/ESC protocol (typically 1000–2000 µs range). No
 #define ESC_ABS_MAX_US      1940
 
 // Operational drive range (inset from abs limits for smoother start/stop)
-#define ESC_DRIVE_MIN_US    1150
-#define ESC_DRIVE_MAX_US    1850
+#define ESC_DRIVE_MIN_US    1100
+#define ESC_DRIVE_MAX_US    1940
 
 // Low battery cutoff (disable if no battery sensor connected)
 #define ENABLE_LOW_BATTERY_CUTOFF  false
