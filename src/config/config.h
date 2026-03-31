@@ -17,12 +17,18 @@
 // HARDWARE PIN ASSIGNMENTS
 // =============================================================================
 
+// IMU Pins
+#define imu_uart    uart0
+#define imu_tx_pin  0
+#define imu_rx_pin  1
+
+
 // ESC Motor Pins (PWM signal to ESC)
-#define PIN_MOTOR_TRH_LEFT         0   // GP0 - Left drive motor
-#define PIN_MOTOR_REV_LEFT         1   // GP0 - Left drive motor
-#define PIN_MOTOR_TRH_RIGHT         2   // GP0 - Left drive motor
-#define PIN_MOTOR_REV_RIGHT        3   // GP0 - Left drive motor
-#define PIN_WEAPON             4   // GP2 - Weapon motor
+#define PIN_MOTOR_TRH_LEFT         2
+#define PIN_MOTOR_REV_LEFT         3
+#define PIN_MOTOR_TRH_RIGHT        4
+#define PIN_MOTOR_REV_RIGHT        5
+#define PIN_WEAPON                 6
 
 // Analog Inputs
 #define PIN_BATTERY_ADC  26  // ADC0 - Battery voltage divider
@@ -67,8 +73,8 @@ This is the standard RC servo/ESC protocol (typically 1000–2000 µs range). No
 #define ESC_ABS_MAX_US      1940
 
 // Operational drive range (inset from abs limits for smoother start/stop)
-#define ESC_DRIVE_MIN_US    1150
-#define ESC_DRIVE_MAX_US    1850
+#define ESC_DRIVE_MIN_US    1100
+#define ESC_DRIVE_MAX_US    1940
 
 // Low battery cutoff (disable if no battery sensor connected)
 #define ENABLE_LOW_BATTERY_CUTOFF  false

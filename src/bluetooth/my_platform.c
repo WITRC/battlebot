@@ -10,7 +10,7 @@
 
 #include <pico/stdlib.h>      // For to_ms_since_boot
 #include <pico/cyw43_arch.h>  // For controlling the onboard LED
-#include <pico/time.h>        // For repeating timer
+#include <btstack_run_loop.h> // For run-loop timers
 #include <uni.h>              // Bluepad32 main header
 
 #include "config.h"           // Central configuration
@@ -33,6 +33,9 @@
 static motor_controller_t motor_ctrl;
 static bool xbox_pressed = false;
 static bool prev_xbox_pressed = false;
+
+static btstack_timer_source_t imu_timer;
+static uint32_t imu_last_log_ms = 0;
 // =============================================================================
 // CONTROL MAPPING
 // =============================================================================
@@ -48,15 +51,6 @@ static void process_controller_input(uni_gamepad_t *gp) {
     if (motor_ctrl.state == initializing) {
         printf("Cannot process input while initializing");
         return;
-    }
-
-    // === PROCESS DATA ===
-    if (imu_update()) {
-        IMUData imu_data = imu_get_data();
-        printf("IMU data: ");
-        printf("%0.2f %0.2f %0.2f | %0.2f %0.2f %0.2f \n\n",
-            imu_data.accel_x, imu_data.accel_y, imu_data.accel_z,
-            imu_data.gyro_x,  imu_data.gyro_y,  imu_data.gyro_z);
     }
 
     // === EMERGENCY STOP ===
@@ -119,6 +113,27 @@ static void my_platform_init(int argc, const char **argv) {
     printf("Monster Book of Monsters - Controller initialized\n");
 }
 
+static void imu_poll_timer(btstack_timer_source_t *ts) {
+    imu_update();
+    uint32_t now_ms = to_ms_since_boot(get_absolute_time());
+
+    if ((now_ms - imu_last_log_ms) >= 1000) {
+        IMUData d = imu_get_data();
+        printf("ACC[g] x=%+.3f y=%+.3f z=%+.3f | "
+               "GYRO[dps] x=%+.3f y=%+.3f z=%+.3f | "
+               "ANGLE[deg] roll=%+.3f pitch=%+.3f yaw=%+.3f | "
+               "MAG raw x=%d y=%d z=%d\n",
+               d.accel_x, d.accel_y, d.accel_z,
+               d.gyro_x, d.gyro_y, d.gyro_z,
+               d.roll, d.pitch, d.yaw,
+               d.mag_x, d.mag_y, d.mag_z);
+        imu_last_log_ms = now_ms;
+    }
+
+    btstack_run_loop_set_timer(ts, 10);
+    btstack_run_loop_add_timer(ts);
+}
+
 /**
  * Called when Bluetooth stack is fully initialized and ready.
  */
@@ -129,8 +144,13 @@ static void my_platform_on_init_complete(void) {
     printf("==================================================\n");
     printf("\n");
 
+    //init IMU and start periodic polling timer for data and once-per-second serial logging
     imu_init();
+    btstack_run_loop_set_timer_handler(&imu_timer, imu_poll_timer);
+    btstack_run_loop_set_timer(&imu_timer, 10);
+    btstack_run_loop_add_timer(&imu_timer);
 
+    // Initialize motor controller (sets up PWM and starts in stopped/disarmed state)
     motor_controller_init(&motor_ctrl);
     motor_ctrl.state = stopped; // Start in "off" state until controller is connected
 
