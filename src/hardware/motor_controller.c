@@ -46,12 +46,8 @@ void motor_controller_set(motor_t* m, int* cSpeed, int speed) {
     speed = deadband(speed);
     speed = clamp_int(speed, -MOTOR_MAX_SPEED, MOTOR_MAX_SPEED);
 
-    // Ramp toward target instead of jumping instantly
     int delta = speed - *cSpeed;
-    int limit = (delta > 0) ? MOTOR_RAMP_UP : MOTOR_RAMP_DOWN;
-    if (delta >  limit) delta =  limit;
-    if (delta < -limit) delta = -limit;
-    speed = *cSpeed + delta;
+    speed = *cSpeed + (int)(delta * MOTOR_INTERPOLATION); // * 100 / lerp???? to disable int conversion
 
     motor_set_speed(m, speed);
     *cSpeed = speed;

@@ -1,2 +1,4 @@
 screen /dev/ttyACM0 115200
 sudo dmesg -w
+
+vim /home/griffty/robotics-tools/gcc-arm-none-eabi-10.3-2021.10/arm-none-eabi/include/stdio.h [204, 64]

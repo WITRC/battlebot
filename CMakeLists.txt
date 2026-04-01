@@ -28,6 +28,7 @@ add_executable(${PROJECT_NAME}
         src/hardware/motor_pwm_control.c
         src/hardware/motor_omni.c
         src/hardware/motor_bi.c
+        src/hardware/imu.c
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
