@@ -17,12 +17,18 @@
 // HARDWARE PIN ASSIGNMENTS
 // =============================================================================
 
+// IMU Pins
+#define imu_uart    uart0
+#define imu_tx_pin  0
+#define imu_rx_pin  1
+
+
 // ESC Motor Pins (PWM signal to ESC)
-#define PIN_MOTOR_TRH_LEFT         0   // GP0 - Left drive motor
-#define PIN_MOTOR_REV_LEFT         1   // GP0 - Left drive motor
-#define PIN_MOTOR_TRH_RIGHT         2   // GP0 - Left drive motor
-#define PIN_MOTOR_REV_RIGHT        3   // GP0 - Left drive motor
-#define PIN_WEAPON             4   // GP2 - Weapon motor
+#define PIN_MOTOR_TRH_LEFT         2
+#define PIN_MOTOR_REV_LEFT         3
+#define PIN_MOTOR_TRH_RIGHT        4
+#define PIN_MOTOR_REV_RIGHT        5
+#define PIN_WEAPON                 6
 
 // Analog Inputs
 #define PIN_BATTERY_ADC  26  // ADC0 - Battery voltage divider
@@ -44,6 +50,7 @@
 // Higher = faster response, lower = smoother
 #define MOTOR_RAMP_UP       5       // Max speed increase per update
 #define MOTOR_RAMP_DOWN     10      // Max speed decrease per update (brake faster than accelerate)
+#define MOTOR_INTERPOLATION    0.3f    // Exponential smoothing factor for speed changes (0.0 = no smoothing, 1.0 = infinite smoothing)
 
 // =============================================================================
 // SAFETY SETTINGS

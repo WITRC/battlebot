@@ -14,7 +14,9 @@
 #include "config.h"            // Central configuration
 #include "sdkconfig.h"         // Bluepad32 configuration
 #include "web_server.h"
-#include "wifi_ap.h"           // Wi-Fi access point
+#include "wifi_ap.h"           // WiFi access point
+#include "hardware/imu.h"     // IMU sensor driver
+
 
 // Verify we're using custom platform mode (required for Pico W)
 #ifndef CONFIG_BLUEPAD32_PLATFORM_CUSTOM
@@ -60,6 +62,7 @@ int main() {
     }
 
     printf("CYW43 ready\n");
+
 
     // Turn on LED while setting up
     cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);
