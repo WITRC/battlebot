@@ -31,12 +31,14 @@ static void http_close(struct tcp_pcb* tpcb);
 /** @brief Write a full HTTP 200 response with the motor-status HTML page into @p buffer. */
 static int generate_status_page(char* buffer, int max_len) {
     // init values
-    int left;
-    int right;
-    int weapon;
-    float voltage;
-    int battery_percent;
-    float temp;
+    int left = 0;
+    int right = 0;
+    int weapon = 0;
+    float voltage = 0.0f;
+    int battery_percent = 0;
+    float temp = 0.0f;
+    const char* status_class = "safe";
+    const char* status_text = "STOPPED";
 
     // get motor data
     if (motors_ctrl != NULL) {
@@ -44,6 +46,15 @@ static int generate_status_page(char* buffer, int max_len) {
         left = motors_ctrl->left_speed;
         right = motors_ctrl->right_speed;
         weapon = motors_ctrl->weapon_speed;
+
+        if (motors_ctrl->state == active) {
+            status_text = "ACTIVE";
+        } else if (motors_ctrl->state == initializing) {
+            status_text = "INIT";
+        } else if (motors_ctrl->state == stopped) {
+            status_text = "STOPPED";
+        }
+
 
     }
 
@@ -78,7 +89,8 @@ static int generate_status_page(char* buffer, int max_len) {
         "</div>"
         "</body></html>",
         ROBOT_NAME,                            // %s (H1)
-        left, right, weapon,                   // %d, %d, %d
+        status_class, status_text,             // %s, %s
+        left, right, weapon,                   // %+d, %+d, %d
         voltage, battery_percent,              // %.2f, %d
         temp                                   // %.1f
     );
@@ -100,7 +112,7 @@ static int generate_404(char* buffer, int max_len) {
 // =============================================================================
 
 /** @brief lwIP receive callback — generates and sends the status page, then closes. */
-static err_t http_recv(void* arg, struct tcp_pcb* tpcb, struct pbuf* p, err_t err) {
+static err_t http_recv(void* arg, struct tcp_pcb* tpcb, struct pbuf* p, err_t err) { //todo: causes crash???
     if (p == NULL) {
         http_close(tpcb);
         return ERR_OK;
@@ -113,6 +125,15 @@ static err_t http_recv(void* arg, struct tcp_pcb* tpcb, struct pbuf* p, err_t er
 
     // Generate the page
     int response_len = generate_status_page(g_response_buffer, RESPONSE_BUFFER_SIZE);
+    if (response_len < 0) {
+        printf("Web Server: failed to generate response\n");
+        pbuf_free(p);
+        http_close(tpcb);
+        return ERR_VAL;
+    }
+    if (response_len >= RESPONSE_BUFFER_SIZE) {
+        response_len = RESPONSE_BUFFER_SIZE - 1;
+    }
 
     // Write and Force Push
     err_t write_err = tcp_write(tpcb, g_response_buffer, response_len, TCP_WRITE_FLAG_COPY);
