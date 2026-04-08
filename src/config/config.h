@@ -56,7 +56,7 @@
 // SAFETY SETTINGS
 // =============================================================================
 
-#define FAILSAFE_ENABLED    true
+#define FAILSAFE_ENABLED    false
 #define FAILSAFE_TIMEOUT_MS 2000    // Time without commands before triggering failsafe
 
 /*
@@ -107,7 +107,9 @@ This is the standard RC servo/ESC protocol (typically 1000–2000 µs range). No
 // WEB SERVER SETTINGS
 // =============================================================================
 
-#define WEB_SERVER_PORT   80
+#define WEB_SERVER_PORT             80
+#define WEB_SERVER_MAX_SSE_CLIENTS  4       // only allow 4 clients to connect to live dashboard, otherwise Pico will cry (pls don't change)
+#define WEB_SERVER_SSE_INTERVAL_MS  200     // interval for sending status updates to dashboard
 
 // =============================================================================
 // CONTROLLER MAPPING
@@ -135,6 +137,6 @@ This is the standard RC servo/ESC protocol (typically 1000–2000 µs range). No
 // DEBUG SETTINGS
 // =============================================================================
 
-#define VERBOSE_LOGGING      false
+#define SERIAL_LOGGING      false
 
 #endif // CONFIG_H

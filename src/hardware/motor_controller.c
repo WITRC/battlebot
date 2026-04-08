@@ -42,7 +42,7 @@ void motor_controller_init(motor_controller_t* mc) {
     printf("Motor controller ready\n");
 }
 
-void motor_controller_set(motor_t* m, int* cSpeed, int speed) {
+void motor_controller_update_motor(motor_t* m, int* cSpeed, int speed) {
     speed = deadband(speed);
     speed = clamp_int(speed, -MOTOR_MAX_SPEED, MOTOR_MAX_SPEED);
 
@@ -53,14 +53,23 @@ void motor_controller_set(motor_t* m, int* cSpeed, int speed) {
     *cSpeed = speed;
 }
 
+
+void motor_controller_set_motor(motor_t* m, int* cSpeed, int speed) {
+    speed = deadband(speed);
+    speed = clamp_int(speed, -MOTOR_MAX_SPEED, MOTOR_MAX_SPEED);
+
+    motor_set_speed(m, speed);
+    *cSpeed = speed;
+}
+
 void motor_controller_tank_drive(motor_controller_t* mc, int left, int right) {
-    motor_controller_set((motor_t*)&mc->motor_left, &mc->left_speed, left);
-    motor_controller_set((motor_t*)&mc->motor_right, &mc->right_speed, right);
+    motor_controller_update_motor((motor_t*)&mc->motor_left, &mc->left_speed, left);
+    motor_controller_update_motor((motor_t*)&mc->motor_right, &mc->right_speed, right);
     update_command_time(mc);
 }
 
 void motor_controller_weapon(motor_controller_t* mc, int weapon) {
-    motor_controller_set((motor_t*)&mc->weapon, &mc->weapon_speed, weapon);
+    motor_controller_update_motor((motor_t*)&mc->weapon, &mc->weapon_speed, weapon);
     update_command_time(mc);
 }
 

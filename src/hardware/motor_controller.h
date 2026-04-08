@@ -51,11 +51,18 @@ void motor_controller_tank_drive(motor_controller_t* mc, int left, int right);
 void motor_controller_weapon(motor_controller_t* mc, int weapon);
 
 /**
- * @brief Update a single motor's speed, applying deadband/clamping.
+ * @brief Update a single motor's speed, applying deadband/clamping, directly without interpolation
  * @param cSpeed  Pointer to the cached speed value to update.
  * @param speed   Desired speed [-100, 100].
  */
-void motor_controller_set(motor_t* m, int* cSpeed, int speed);
+void motor_controller_set_motor(motor_t* m, int* cSpeed, int speed);
+
+/**
+ * @brief Update a single motor's speed applying deadband/clamping, using simple interpolation
+ * @param cSpeed  Pointer to the cached speed value to update.
+ * @param speed   Desired speed [-100, 100].
+ */
+void motor_controller_update_motor(motor_t* m, int* cSpeed, int speed);
 
 /**
  * Emergency stop - all motors to zero, weapon disarmed.

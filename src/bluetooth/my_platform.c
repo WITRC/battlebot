@@ -117,7 +117,7 @@ static void imu_poll_timer(btstack_timer_source_t *ts) {
     imu_update();
     uint32_t now_ms = to_ms_since_boot(get_absolute_time());
 
-    if ((now_ms - imu_last_log_ms) >= 1000) {
+    if (SERIAL_LOGGING && (now_ms - imu_last_log_ms) >= 1000) {
         IMUData d = imu_get_data();
         printf("ACC[g] x=%+.3f y=%+.3f z=%+.3f | "
                "GYRO[dps] x=%+.3f y=%+.3f z=%+.3f | "
@@ -314,6 +314,9 @@ static void my_platform_on_controller_data(uni_hid_device_t *d, uni_controller_t
         return;
     }
 
+    web_server_interrupt_test_run();
+
+
     prev = *ctl;
 
     if (ctl->klass == UNI_CONTROLLER_CLASS_GAMEPAD) {
@@ -322,13 +325,15 @@ static void my_platform_on_controller_data(uni_hid_device_t *d, uni_controller_t
         process_controller_input(gp);
 
         // === DEBUG OUTPUT ===
-        printf("Motors: L=%+4d%% R=%+4d%% W=%3d%% | ",
-               motor_ctrl.left_speed, motor_ctrl.right_speed, motor_ctrl.weapon_speed);
-        print_buttons(gp->buttons, gp->misc_buttons);
-        printf("| DPad: %-10s", dpad_to_string(gp->dpad));
-        printf("| Sticks: (%+4d,%+4d) (%+4d,%+4d)",
-               gp->axis_x, gp->axis_y, gp->axis_rx, gp->axis_ry);
-        printf("| Trig: %4d %4d | State %1d\n", gp->brake, gp->throttle, motor_ctrl.state);
+        if (SERIAL_LOGGING){
+            printf("Motors: L=%+4d%% R=%+4d%% W=%3d%% | ",
+                   motor_ctrl.left_speed, motor_ctrl.right_speed, motor_ctrl.weapon_speed);
+            print_buttons(gp->buttons, gp->misc_buttons);
+            printf("| DPad: %-10s", dpad_to_string(gp->dpad));
+            printf("| Sticks: (%+4d,%+4d) (%+4d,%+4d)",
+                   gp->axis_x, gp->axis_y, gp->axis_rx, gp->axis_ry);
+            printf("| Trig: %4d %4d | State %1d\n", gp->brake, gp->throttle, motor_ctrl.state);
+        }
     }
 }
 
