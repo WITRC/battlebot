@@ -42,6 +42,14 @@ static void http_close(struct tcp_pcb* tpcb);
 static void http_abort(struct tcp_pcb* tpcb);
 static void sse_broadcast_timer(btstack_timer_source_t* ts);
 
+static int sse_client_index(const sse_client_t* client) {
+    if (client == NULL) {
+        return -1;
+    }
+
+    return (int)(client - g_sse_clients);
+}
+
 static const char* controller_state_text(p_state state) {
     switch (state) {
         case active:
@@ -285,6 +293,7 @@ static int handle_test_stop(char* buffer, int max_len) {
 
 static int handle_state_toggle(char* buffer, int max_len) {
     if (g_motors_ctrl->state == initializing) {
+        printf("Web Server: state toggle rejected while controller is initializing\n");
         return generate_text_response(buffer, max_len, 409, "Conflict", "Controller is still initializing.");
     }
 
@@ -293,9 +302,11 @@ static int handle_state_toggle(char* buffer, int max_len) {
     }
 
     if (motor_controller_toggle_state(g_motors_ctrl) == stopped) {
+        printf("Web Server: emergency stop engaged from web request\n");
         return generate_text_response(buffer, max_len, 200, "OK", "Emergency stop engaged.");
     }
 
+    printf("Web Server: controller input resumed from web request\n");
     return generate_text_response(buffer, max_len, 200, "OK", "Controller input resumed.");
 }
 
@@ -335,6 +346,11 @@ static err_t http_recv(void* arg, struct tcp_pcb* tpcb, struct pbuf* p, err_t er
     (void)err;
 
     if (p == NULL) {
+        if (sse_client != NULL) {
+            printf("Web Server: SSE client slot=%d disconnected\n", sse_client_index(sse_client));
+        } else {
+            printf("Web Server: HTTP client disconnected\n");
+        }
         release_sse_client(sse_client);
         http_close(tpcb);
         return ERR_OK;
@@ -368,6 +384,7 @@ static err_t http_recv(void* arg, struct tcp_pcb* tpcb, struct pbuf* p, err_t er
     if (strcmp(target, "/events") == 0) {
         sse_client = allocate_sse_client(tpcb);
         if (sse_client == NULL) {
+            printf("Web Server: rejected SSE client, all %d slots are busy\n", WEB_SERVER_MAX_SSE_CLIENTS);
             const int response_len = generate_503(g_page_buffer, sizeof(g_page_buffer));
             tcp_write_response(tpcb, g_page_buffer, response_len, sizeof(g_page_buffer));
             http_close(tpcb);
@@ -397,11 +414,14 @@ static err_t http_recv(void* arg, struct tcp_pcb* tpcb, struct pbuf* p, err_t er
             sse_client->backpressure_since_ms = 0;
         }
 
+        printf("Web Server: SSE client connected slot=%d\n", sse_client_index(sse_client));
+
         return ERR_OK;
     }
 
     int response_len = 0;
     if (strcmp(target, "/") == 0 || strcmp(target, "/index.html") == 0) {
+        printf("Web Server: serving dashboard page\n");
         err_t write_err = tcp_write_const_response(tpcb, web_dashboard_page_data(), (int)web_dashboard_page_size());
         if (write_err != ERR_OK) {
             printf("Web Server: tcp_write failed with error %d\n", write_err);
@@ -417,6 +437,7 @@ static err_t http_recv(void* arg, struct tcp_pcb* tpcb, struct pbuf* p, err_t er
     } else if (strcmp(target, "/api/estop/toggle") == 0 || strcmp(target, "/api/state/toggle") == 0) {
         response_len = handle_state_toggle(g_page_buffer, sizeof(g_page_buffer));
     } else {
+        printf("Web Server: 404 for path '%s'\n", target);
         response_len = generate_404(g_page_buffer, sizeof(g_page_buffer));
     }
 
@@ -430,8 +451,12 @@ static err_t http_recv(void* arg, struct tcp_pcb* tpcb, struct pbuf* p, err_t er
 }
 
 static void http_err(void* arg, err_t err) {
+    if (arg != NULL) {
+        printf("Web Server: SSE client slot=%d errored with %d\n", sse_client_index((const sse_client_t*)arg), err);
+    } else {
+        printf("Web Server: HTTP connection errored with %d\n", err);
+    }
     release_sse_client((sse_client_t*)arg);
-    (void)err;
 }
 
 static err_t http_accept(void* arg, struct tcp_pcb* newpcb, err_t err) {
