@@ -57,13 +57,11 @@ static void process_controller_input(uni_gamepad_t *gp) {
     xbox_pressed = (gp->misc_buttons & MISC_BUTTON_SYSTEM) != 0;
 
     if (xbox_pressed && !prev_xbox_pressed) {
-        if (motor_ctrl.state == active) {
-            motor_ctrl.state = stopped;
+        p_state new_state = motor_controller_toggle_state(&motor_ctrl);
+        if (new_state == stopped) {
             printf("EMERGENCY STOP ACTIVATED!\n");
-            motor_controller_stop_all(&motor_ctrl);
-        } else if (motor_ctrl.state == stopped) {
+        } else if (new_state == active) {
             printf("Resuming normal operation...\n");
-            motor_ctrl.state = active;
         }
     }
 
@@ -152,7 +150,7 @@ static void my_platform_on_init_complete(void) {
 
     // Initialize motor controller (sets up PWM and starts in stopped/disarmed state)
     motor_controller_init(&motor_ctrl);
-    motor_ctrl.state = stopped; // Start in "off" state until controller is connected
+    motor_controller_set_state(&motor_ctrl, stopped); // Start in "off" state until controller is connected
 
     // Initialize web server (Wi-Fi AP already started in main.c)
     wifi_ap_init();
@@ -208,7 +206,7 @@ static uni_error_t my_platform_on_device_discovered(bd_addr_t addr, const char *
  */
 static void my_platform_on_device_connected(uni_hid_device_t *d) {
     printf("Controller connected!\n");
-    motor_ctrl.state = stopped; // Set to "on" state when controller connects
+    motor_controller_set_state(&motor_ctrl, stopped); // Require explicit resume after controller connects
     uni_bt_stop_scanning_safe();
     cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1); // LED on = controller connected
 }
@@ -224,8 +222,7 @@ static void my_platform_on_device_disconnected(uni_hid_device_t *d) {
     // SAFETY: Emergency stop all motors immediately
     if (motor_ctrl.state != initializing) {
         printf(">>> Stopping all motors...\n");
-        motor_controller_stop_all(&motor_ctrl);
-        motor_ctrl.state = stopped; // Set to "off" state until controller reconnects
+        motor_controller_set_state(&motor_ctrl, stopped); // Set to "off" state until controller reconnects
         printf(">>> All motors stopped, weapon disarmed\n");
     }
 

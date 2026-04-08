@@ -73,6 +73,23 @@ void motor_controller_weapon(motor_controller_t* mc, int weapon) {
     update_command_time(mc);
 }
 
+void motor_controller_set_state(motor_controller_t* mc, p_state state) {
+    mc->state = state;
+
+    if (state == stopped) {
+        motor_controller_stop_all(mc);
+    }
+}
+
+p_state motor_controller_toggle_state(motor_controller_t* mc) {
+    if (mc->state == active) {
+        motor_controller_set_state(mc, stopped);
+    } else if (mc->state == stopped) {
+        motor_controller_set_state(mc, active);
+    }
+
+    return mc->state;
+}
 
 void motor_controller_stop_all(motor_controller_t* mc) {
     motor_stop((motor_t*)&mc->motor_left);

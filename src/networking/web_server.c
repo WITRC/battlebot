@@ -22,6 +22,7 @@
 
 typedef struct {
     struct tcp_pcb* pcb;
+    uint32_t backpressure_since_ms;
 } sse_client_t;
 
 static struct tcp_pcb* g_server_pcb = NULL;
@@ -38,6 +39,7 @@ static err_t http_accept(void* arg, struct tcp_pcb* newpcb, err_t err);
 static err_t http_recv(void* arg, struct tcp_pcb* tpcb, struct pbuf* p, err_t err);
 static void http_err(void* arg, err_t err);
 static void http_close(struct tcp_pcb* tpcb);
+static void http_abort(struct tcp_pcb* tpcb);
 static void sse_broadcast_timer(btstack_timer_source_t* ts);
 
 static const char* controller_state_text(p_state state) {
@@ -281,6 +283,22 @@ static int handle_test_stop(char* buffer, int max_len) {
                                   was_active ? "Motor test stopped." : "No active motor test; motors stopped.");
 }
 
+static int handle_state_toggle(char* buffer, int max_len) {
+    if (g_motors_ctrl->state == initializing) {
+        return generate_text_response(buffer, max_len, 409, "Conflict", "Controller is still initializing.");
+    }
+
+    if (g_motors_ctrl->state == active && web_motor_test_is_active()) {
+        web_motor_test_stop("web e-stop");
+    }
+
+    if (motor_controller_toggle_state(g_motors_ctrl) == stopped) {
+        return generate_text_response(buffer, max_len, 200, "OK", "Emergency stop engaged.");
+    }
+
+    return generate_text_response(buffer, max_len, 200, "OK", "Controller input resumed.");
+}
+
 static sse_client_t* allocate_sse_client(struct tcp_pcb* tpcb) {
     for (size_t i = 0; i < WEB_SERVER_MAX_SSE_CLIENTS; ++i) {
         if (g_sse_clients[i].pcb == NULL) {
@@ -294,8 +312,21 @@ static sse_client_t* allocate_sse_client(struct tcp_pcb* tpcb) {
 
 static void release_sse_client(sse_client_t* client) {
     if (client != NULL) {
-        client->pcb = NULL;
+        memset(client, 0, sizeof(*client));
     }
+}
+
+static void drop_sse_client(size_t index, const char* reason, uint32_t age_ms) {
+    struct tcp_pcb* pcb = g_sse_clients[index].pcb;
+    if (pcb == NULL) {
+        return;
+    }
+
+    printf("Web Server: dropping SSE client (%s after %lu ms)\n",
+           reason,
+           (unsigned long)age_ms);
+    release_sse_client(&g_sse_clients[index]);
+    http_abort(pcb);
 }
 
 static err_t http_recv(void* arg, struct tcp_pcb* tpcb, struct pbuf* p, err_t err) {
@@ -353,6 +384,7 @@ static err_t http_recv(void* arg, struct tcp_pcb* tpcb, struct pbuf* p, err_t er
             http_close(tpcb);
             return write_err;
         }
+        sse_client->backpressure_since_ms = 0;
 
         response_len = generate_sse_frame(g_event_buffer, sizeof(g_event_buffer));
         write_err = tcp_write_response(tpcb, g_event_buffer, response_len, sizeof(g_event_buffer));
@@ -360,6 +392,9 @@ static err_t http_recv(void* arg, struct tcp_pcb* tpcb, struct pbuf* p, err_t er
             release_sse_client(sse_client);
             http_close(tpcb);
             return write_err;
+        }
+        if (write_err == ERR_OK) {
+            sse_client->backpressure_since_ms = 0;
         }
 
         return ERR_OK;
@@ -379,6 +414,8 @@ static err_t http_recv(void* arg, struct tcp_pcb* tpcb, struct pbuf* p, err_t er
         response_len = handle_test_start(query, g_page_buffer, sizeof(g_page_buffer));
     } else if (strcmp(target, "/api/test/stop") == 0) {
         response_len = handle_test_stop(g_page_buffer, sizeof(g_page_buffer));
+    } else if (strcmp(target, "/api/estop/toggle") == 0 || strcmp(target, "/api/state/toggle") == 0) {
+        response_len = handle_state_toggle(g_page_buffer, sizeof(g_page_buffer));
     } else {
         response_len = generate_404(g_page_buffer, sizeof(g_page_buffer));
     }
@@ -424,6 +461,17 @@ static void http_close(struct tcp_pcb* tpcb) {
     }
 }
 
+static void http_abort(struct tcp_pcb* tpcb) {
+    if (tpcb == NULL) {
+        return;
+    }
+
+    tcp_arg(tpcb, NULL);
+    tcp_recv(tpcb, NULL);
+    tcp_err(tpcb, NULL);
+    tcp_abort(tpcb);
+}
+
 static void sse_broadcast_timer(btstack_timer_source_t* ts) {
     if (!g_running) {
         return;
@@ -451,9 +499,17 @@ static void sse_broadcast_timer(btstack_timer_source_t* ts) {
 
         err_t write_err = tcp_write_response(pcb, g_event_buffer, frame_len, sizeof(g_event_buffer));
         if (write_err == ERR_MEM) {
+            if (g_sse_clients[i].backpressure_since_ms == 0) {
+                g_sse_clients[i].backpressure_since_ms = now_ms;
+            }
+
             if ((now_ms - g_last_sse_backpressure_log_ms) >= WEB_SERVER_SSE_BACKPRESSURE_LOG_INTERVAL_MS) {
                 printf("Web Server: SSE backpressure sndbuf=%u\n", tcp_sndbuf(pcb));
                 g_last_sse_backpressure_log_ms = now_ms;
+            }
+
+            if ((now_ms - g_sse_clients[i].backpressure_since_ms) >= WEB_SERVER_SSE_STALL_TIMEOUT_MS) {
+                drop_sse_client(i, "stalled backpressure", now_ms - g_sse_clients[i].backpressure_since_ms);
             }
             continue;
         }
@@ -461,7 +517,10 @@ static void sse_broadcast_timer(btstack_timer_source_t* ts) {
         if (write_err != ERR_OK) {
             release_sse_client(&g_sse_clients[i]);
             http_close(pcb);
+            continue;
         }
+
+        g_sse_clients[i].backpressure_since_ms = 0;
     }
     cyw43_arch_lwip_end();
 

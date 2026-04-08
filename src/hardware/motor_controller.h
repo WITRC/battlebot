@@ -51,6 +51,19 @@ void motor_controller_tank_drive(motor_controller_t* mc, int left, int right);
 void motor_controller_weapon(motor_controller_t* mc, int weapon);
 
 /**
+ * Set the controller state.
+ * Entering the stopped state also stops all motors immediately.
+ */
+void motor_controller_set_state(motor_controller_t* mc, p_state state);
+
+/**
+ * Toggle between active and stopped states.
+ * Entering the stopped state also stops all motors immediately.
+ * @return The new controller state.
+ */
+p_state motor_controller_toggle_state(motor_controller_t* mc);
+
+/**
  * @brief Update a single motor's speed, applying deadband/clamping, directly without interpolation
  * @param cSpeed  Pointer to the cached speed value to update.
  * @param speed   Desired speed [-100, 100].

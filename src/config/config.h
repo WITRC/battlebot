@@ -110,6 +110,7 @@ This is the standard RC servo/ESC protocol (typically 1000–2000 µs range). No
 #define WEB_SERVER_PORT             80
 #define WEB_SERVER_MAX_SSE_CLIENTS  4       // only allow 4 clients to connect to live dashboard, otherwise Pico will cry (pls don't change)
 #define WEB_SERVER_SSE_INTERVAL_MS  200     // interval for sending status updates to dashboard
+#define WEB_SERVER_SSE_STALL_TIMEOUT_MS 3000 // drop SSE clients that stay backpressured for this long
 
 // =============================================================================
 // CONTROLLER MAPPING
