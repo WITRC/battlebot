@@ -32,54 +32,106 @@ Follow instructions in [LINUX.md](LINUX.md)
 ## Pinout
 
 ```
-                        Pico 2 W
-                    ┌───────────────┐
-            GP0  ←──┤ 1          40 ├── VBUS
-            GP1  ←──┤ 2          39 ├── VSYS
-            GND  ───┤ 3          38 ├── GND
-            GP2  ←──┤ 4          37 ├── 3V3_EN
-            GP3  ←──┤ 5          36 ├── 3V3
-            GP4  ←──┤ 6          35 ├── ADC_VREF
-            GP5  ───┤ 7          34 ├── GP28
-            GND  ───┤ 8          33 ├── GND
-            GP6  ───┤ 9          32 ├── GP27
-            GP7  ───┤ 10         31 ├── GP26  ←── Battery ADC
-            GP8  ───┤ 11         30 ├── RUN
-            GP9  ───┤ 12         29 ├── GP22
-            GND  ───┤ 13         28 ├── GND
-            GP10 ───┤ 14         27 ├── GP21
-            GP11 ───┤ 15         26 ├── GP20
-            GP12 ───┤ 16         25 ├── GP19
-            GP13 ───┤ 17         24 ├── GP18
-            GND  ───┤ 18         23 ├── GND
-            GP14 ───┤ 19         22 ├── GP17
-            GP15 ───┤ 20         21 ├── GP16
-                    └───────────────┘
+                              Pico 2 W
+                          ┌───────────────┐
+  Left Throttle    GP0 ←──┤ 1          40 ├── VBUS
+  Left Reverse     GP1 ←──┤ 2          39 ├── VSYS ───── Step-down 5V (power in)
+                   GND ←──┤ 3          38 ├── GND ────── Common GND / SD Card GND
+  Right Throttle   GP2 ←──┤ 4          37 ├── 3V3_EN
+  Right Reverse    GP3 ←──┤ 5          36 ├── 3V3 ────── SD Card 3V3
+  DHT11 Data       GP4 ───┤ 6          35 ├── ADC_VREF
+  Fan 1 Tach       GP5 ───┤ 7          34 ├── GP28
+                   GND ───┤ 8          33 ├── GND
+  Weapon           GP6 ───┤ 9          32 ├── GP27
+  Fan 2 Tach       GP7 ───┤ 10         31 ├── GP26 ←──── Battery ADC
+  LED Strip DIN    GP8 ───┤ 11         30 ├── RUN
+                   GP9 ───┤ 12         29 ├── GP22
+                   GND ───┤ 13         28 ├── GND
+                  GP10 ───┤ 14         27 ├── GP21
+                  GP11 ───┤ 15         26 ├── GP20
+  IMU TX          GP12 ───┤ 16         25 ├── GP19 ←──── SD Card MOSI (SPI0)
+  IMU RX          GP13 ───┤ 17         24 ├── GP18 ←──── SD Card CLK  (SPI0)
+                   GND ───┤ 18         23 ├── GND
+  Fan 1 PWM       GP14 ───┤ 19         22 ├── GP17 ←──── SD Card CS   (SPI0)
+  Fan 2 PWM       GP15 ───┤ 20         21 ├── GP16 ←──── SD Card MISO (SPI0)
+                          └───────────────┘
 ```
 
-### Motor Connections
+### Pin Assignment Summary
 
-| Pin  | Function          | Wire To                    |
-|------|-------------------|----------------------------|
-| GP0  | Left Front Motor  | ESC signal (white/yellow)  |
-| GP1  | Right Front Motor | ESC signal (white/yellow)  |
-| GP2  | Left Back Motor   | ESC signal (white/yellow)  |
-| GP3  | Right Back Motor  | ESC signal (white/yellow)  |
-| GP4  | Weapon Motor      | ESC signal (white/yellow)  |
-| GP26 | Battery Voltage   | Voltage divider output     |
-| GND  | Common Ground     | All ESC grounds            |
+| GPIO | Function              | Peripheral   | Status  |
+|------|-----------------------|--------------|---------|
+| GP0  | Left Motor Throttle   | PWM Slice 0A | Wired   |
+| GP1  | Left Motor Reverse    | PWM Slice 0B | Wired   |
+| GP2  | Right Motor Throttle  | PWM Slice 1A | Wired   |
+| GP3  | Right Motor Reverse   | PWM Slice 1B | Wired   |
+| GP4  | DHT11 Temp/Humidity   | GPIO         | Wired   |
+| GP5  | Fan 1 Tach (RPM)      | GPIO Input   | Planned |
+| GP6  | Weapon Motor          | PWM Slice 3A | Wired   |
+| GP7  | Fan 2 Tach (RPM)      | GPIO Input   | Planned |
+| GP8  | WS2812B LED Strip DIN | PIO          | Planned |
+| GP14 | Fan 1 PWM             | PWM Slice 7A | Planned |
+| GP15 | Fan 2 PWM             | PWM Slice 7B | Planned |
+| GP12 | IMU TX                | UART0 TX     | Planned |
+| GP13 | IMU RX                | UART0 RX     | Planned |
+| GP16 | SD Card MISO          | SPI0 RX      | Planned |
+| GP17 | SD Card CS            | SPI0 CSn     | Planned |
+| GP18 | SD Card CLK           | SPI0 SCK     | Planned |
+| GP19 | SD Card MOSI          | SPI0 TX      | Planned |
+| GP26 | Battery Voltage       | ADC0         | Planned |
 
 ### ESC Wiring
 
-Each ESC has 3 wires:
-- **Signal** (white/yellow) → Connect to GPIO pin
+Each bidirectional ESC has 3 wires:
+- **Signal** (white/yellow) → Connect to GPIO pin (two signals per ESC: throttle + reverse)
 - **Ground** (black/brown) → Connect to Pico GND
-- **Power** (red) → Leave disconnected (or power Pico from ONE ESC's BEC)
+- **Power** (red) → Leave disconnected (ESCs powered directly from battery)
+
+### WS2812B LED Strip (~75 LEDs, ~50 inches)
+
+| Strip Wire | Wire To                         |
+|------------|---------------------------------|
+| DIN        | GP8 (Pin 11)                    |
+| +5V        | Step-down 5V output (direct)    |
+| GND        | Common GND (shared with Pico)   |
+
+> ⚠️ Do NOT power the strip through the Pico — wire 5V directly from the LM2596S step-down output. Brightness capped at 50% in software to stay within the step-down's 3A limit.
+
+### Noctua NF-A4x10 5V PWM Fans
+
+| Fan Wire       | Fan 1 → Pico      | Fan 2 → Pico      |
+|----------------|--------------------|--------------------|
+| +5V (yellow)   | VSYS (Pin 39)      | VSYS (Pin 39)      |
+| GND (black)    | GND                | GND                |
+| PWM (blue)     | GP14 (Pin 19)      | GP15 (Pin 20)      |
+| Tach (green)   | GP5 (Pin 7)        | GP7 (Pin 10)       |
+
+> Both fans on PWM Slice 7 (25kHz) — independent duty cycles, shared frequency. Tach outputs ~2 pulses per revolution.
+
+### DHT11 Temperature/Humidity Sensor
+
+| Module Pin | Pico Pin          |
+|------------|-------------------|
+| + (VCC)    | 3V3 (Pin 36)      |
+| out (DATA) | GP4 (Pin 6)       |
+| - (GND)    | GND               |
+
+### SD Card Module Wiring
+
+| Module Pin | Pico Pin          |
+|------------|-------------------|
+| 3V3        | 3V3 (Pin 36)      |
+| CS         | GP17 (Pin 22)     |
+| MOSI       | GP19 (Pin 25)     |
+| CLK        | GP18 (Pin 24)     |
+| MISO       | GP16 (Pin 21)     |
+| GND        | GND  (Pin 38)     |
 
 ### Power
 
-- ESCs powered directly from battery (3S LiPo)
-- Pico powered via USB or from one ESC's BEC (5V to VSYS)
+- 3S LiPo (11.1V nominal) powers ESCs directly
+- Step-down converter takes battery voltage → 5V into VSYS (pin 39)
+- Pico's onboard regulator converts 5V → 3.3V for logic and peripherals
 
 ## Connecting Your Pico
 
