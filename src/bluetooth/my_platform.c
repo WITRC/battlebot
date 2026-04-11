@@ -46,7 +46,7 @@ static uint32_t imu_last_log_ms = 0;
  * @brief Map gamepad axes to tank-drive and weapon commands.
  *
  * Left stick Y → left motor, right stick Y → right motor,
- * right trigger → weapon speed, Xbox button → emergency stop toggle.
+ * right trigger → weapon speed, View button → emergency stop toggle.
  */
 static void process_controller_input(uni_gamepad_t *gp) {
     if (motor_ctrl.state == initializing) {
@@ -55,7 +55,7 @@ static void process_controller_input(uni_gamepad_t *gp) {
     }
 
     // === EMERGENCY STOP ===
-    xbox_pressed = (gp->misc_buttons & MISC_BUTTON_SYSTEM) != 0;
+    xbox_pressed = (gp->misc_buttons & MISC_BUTTON_SELECT) != 0;
 
     if (xbox_pressed && !prev_xbox_pressed) {
         p_state new_state = motor_controller_toggle_state(&motor_ctrl);
@@ -76,7 +76,7 @@ static void process_controller_input(uni_gamepad_t *gp) {
     prev_xbox_pressed = xbox_pressed;
 
     if (motor_ctrl.state == stopped) {
-        printf(">>> Controller input received but currently stopped. Press Xbox button to resume.\n");
+        printf(">>> Controller input received but currently stopped. Press View button to resume.\n");
         return;
     }
 
@@ -168,7 +168,7 @@ static void my_platform_on_init_complete(void) {
     printf("  Left Stick Y  : Forward / Reverse\n");
     printf("  Left Stick X  : Turn left / right\n");
     printf("  Right Trigger : Weapon speed\n");
-    printf("  Xbox Button   : Emergency stop\n");
+    printf("  View Button   : Emergency stop\n");
     printf("\n");
 
     printf("\n");

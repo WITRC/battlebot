@@ -152,6 +152,6 @@ This is the standard RC servo/ESC protocol (typically 1000–2000 µs range). No
 // DEBUG SETTINGS
 // =============================================================================
 
-#define SERIAL_LOGGING      false
+#define SERIAL_LOGGING      true
 
 #endif // CONFIG_H
