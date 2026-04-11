@@ -19,16 +19,30 @@
 
 // IMU Pins
 #define imu_uart    uart0
-#define imu_tx_pin  0
-#define imu_rx_pin  1
+#define imu_tx_pin  12
+#define imu_rx_pin  13
 
 
 // ESC Motor Pins (PWM signal to ESC)
-#define PIN_MOTOR_TRH_LEFT         2
-#define PIN_MOTOR_REV_LEFT         3
-#define PIN_MOTOR_TRH_RIGHT        4
-#define PIN_MOTOR_REV_RIGHT        5
-#define PIN_WEAPON                 6
+#define PIN_MOTOR_TRH_LEFT         0
+#define PIN_MOTOR_REV_LEFT         1
+#define PIN_MOTOR_TRH_RIGHT        2
+#define PIN_MOTOR_REV_RIGHT        3
+#define PIN_WEAPON                 6  // Not yet wired
+
+// DHT11 Temperature/Humidity Sensor
+#define PIN_DHT11              4
+
+// Noctua NF-A4x10 5V PWM Fans (25kHz PWM)
+#define PIN_FAN1_PWM           14
+#define PIN_FAN1_TACH          5
+#define PIN_FAN2_PWM           15
+#define PIN_FAN2_TACH          7
+
+// WS2812B LED Strip (PIO driven)
+#define PIN_LED_STRIP          8
+#define LED_STRIP_COUNT        75  // ~50 inches at 60 LEDs/m
+#define LED_STRIP_MAX_BRIGHTNESS 128  // Cap at 50% to stay under 3A step-down limit
 
 // Analog Inputs
 #define PIN_BATTERY_ADC  26  // ADC0 - Battery voltage divider
