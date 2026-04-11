@@ -9,8 +9,13 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "config.h"  // All settings centralized
 #include "motor_controller.h"
+
+#define WEB_SERVER_PAGE_BUFFER_SIZE 512
+#define WEB_SERVER_EVENT_BUFFER_SIZE 128
+#define WEB_SERVER_REQUEST_BUFFER_SIZE 256
+#define WEB_SERVER_SSE_DELAY_LOG_THRESHOLD_MS 500
+#define WEB_SERVER_SSE_BACKPRESSURE_LOG_INTERVAL_MS 1000
 
 /**
  * @brief Initialize and start the web server.
@@ -27,5 +32,8 @@ void web_server_stop(void);
 
 /** @brief Return true if the web server is currently running. */
 bool web_server_is_running(void);
+
+/** @brief Cancel any active web motor test and stop the motors. */
+bool web_server_interrupt_test_run(void);
 
 #endif // WEB_SERVER_H

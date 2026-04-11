@@ -57,13 +57,11 @@ static void process_controller_input(uni_gamepad_t *gp) {
     xbox_pressed = (gp->misc_buttons & MISC_BUTTON_SYSTEM) != 0;
 
     if (xbox_pressed && !prev_xbox_pressed) {
-        if (motor_ctrl.state == active) {
-            motor_ctrl.state = stopped;
+        p_state new_state = motor_controller_toggle_state(&motor_ctrl);
+        if (new_state == stopped) {
             printf("EMERGENCY STOP ACTIVATED!\n");
-            motor_controller_stop_all(&motor_ctrl);
-        } else if (motor_ctrl.state == stopped) {
+        } else if (new_state == active) {
             printf("Resuming normal operation...\n");
-            motor_ctrl.state = active;
         }
     }
 
@@ -117,7 +115,7 @@ static void imu_poll_timer(btstack_timer_source_t *ts) {
     imu_update();
     uint32_t now_ms = to_ms_since_boot(get_absolute_time());
 
-    if ((now_ms - imu_last_log_ms) >= 1000) {
+    if (SERIAL_LOGGING && (now_ms - imu_last_log_ms) >= 1000) {
         IMUData d = imu_get_data();
         printf("ACC[g] x=%+.3f y=%+.3f z=%+.3f | "
                "GYRO[dps] x=%+.3f y=%+.3f z=%+.3f | "
@@ -152,7 +150,7 @@ static void my_platform_on_init_complete(void) {
 
     // Initialize motor controller (sets up PWM and starts in stopped/disarmed state)
     motor_controller_init(&motor_ctrl);
-    motor_ctrl.state = stopped; // Start in "off" state until controller is connected
+    motor_controller_set_state(&motor_ctrl, stopped); // Start in "off" state until controller is connected
 
     // Initialize web server (Wi-Fi AP already started in main.c)
     wifi_ap_init();
@@ -208,7 +206,7 @@ static uni_error_t my_platform_on_device_discovered(bd_addr_t addr, const char *
  */
 static void my_platform_on_device_connected(uni_hid_device_t *d) {
     printf("Controller connected!\n");
-    motor_ctrl.state = stopped; // Set to "on" state when controller connects
+    motor_controller_set_state(&motor_ctrl, stopped); // Require explicit resume after controller connects
     uni_bt_stop_scanning_safe();
     cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1); // LED on = controller connected
 }
@@ -224,8 +222,7 @@ static void my_platform_on_device_disconnected(uni_hid_device_t *d) {
     // SAFETY: Emergency stop all motors immediately
     if (motor_ctrl.state != initializing) {
         printf(">>> Stopping all motors...\n");
-        motor_controller_stop_all(&motor_ctrl);
-        motor_ctrl.state = stopped; // Set to "off" state until controller reconnects
+        motor_controller_set_state(&motor_ctrl, stopped); // Set to "off" state until controller reconnects
         printf(">>> All motors stopped, weapon disarmed\n");
     }
 
@@ -314,6 +311,9 @@ static void my_platform_on_controller_data(uni_hid_device_t *d, uni_controller_t
         return;
     }
 
+    web_server_interrupt_test_run();
+
+
     prev = *ctl;
 
     if (ctl->klass == UNI_CONTROLLER_CLASS_GAMEPAD) {
@@ -322,13 +322,15 @@ static void my_platform_on_controller_data(uni_hid_device_t *d, uni_controller_t
         process_controller_input(gp);
 
         // === DEBUG OUTPUT ===
-        printf("Motors: L=%+4d%% R=%+4d%% W=%3d%% | ",
-               motor_ctrl.left_speed, motor_ctrl.right_speed, motor_ctrl.weapon_speed);
-        print_buttons(gp->buttons, gp->misc_buttons);
-        printf("| DPad: %-10s", dpad_to_string(gp->dpad));
-        printf("| Sticks: (%+4d,%+4d) (%+4d,%+4d)",
-               gp->axis_x, gp->axis_y, gp->axis_rx, gp->axis_ry);
-        printf("| Trig: %4d %4d | State %1d\n", gp->brake, gp->throttle, motor_ctrl.state);
+        if (SERIAL_LOGGING){
+            printf("Motors: L=%+4d%% R=%+4d%% W=%3d%% | ",
+                   motor_ctrl.left_speed, motor_ctrl.right_speed, motor_ctrl.weapon_speed);
+            print_buttons(gp->buttons, gp->misc_buttons);
+            printf("| DPad: %-10s", dpad_to_string(gp->dpad));
+            printf("| Sticks: (%+4d,%+4d) (%+4d,%+4d)",
+                   gp->axis_x, gp->axis_y, gp->axis_rx, gp->axis_ry);
+            printf("| Trig: %4d %4d | State %1d\n", gp->brake, gp->throttle, motor_ctrl.state);
+        }
     }
 }
 
