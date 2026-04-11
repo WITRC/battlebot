@@ -15,6 +15,7 @@
 
 #include "config.h"           // Central configuration
 #include "imu.h"
+#include "dht11.h"
 #include "sdkconfig.h"        // Bluepad32 configuration
 #include "motor_controller.h" // Motor control
 #include "utility.h"
@@ -144,6 +145,7 @@ static void my_platform_on_init_complete(void) {
 
     //init IMU and start periodic polling timer for data and once-per-second serial logging
     imu_init();
+    dht11_init();
     btstack_run_loop_set_timer_handler(&imu_timer, imu_poll_timer);
     btstack_run_loop_set_timer(&imu_timer, 10);
     btstack_run_loop_add_timer(&imu_timer);

@@ -10,6 +10,7 @@
 #include "web_motor_test.h"
 #include "wifi_ap.h"
 #include "imu.h"
+#include "dht11.h"
 
 #include <btstack_run_loop.h>
 #include <stdio.h>
@@ -34,6 +35,9 @@ static uint32_t g_last_sse_tick_ms = 0;
 static uint32_t g_last_sse_backpressure_log_ms = 0;
 static char g_page_buffer[WEB_SERVER_PAGE_BUFFER_SIZE];
 static char g_event_buffer[WEB_SERVER_EVENT_BUFFER_SIZE];
+static DHT11Data g_dht11_data = {0};
+static uint32_t g_dht11_last_read_ms = 0;
+#define DHT11_POLL_INTERVAL_MS 3000
 
 static err_t http_accept(void* arg, struct tcp_pcb* newpcb, err_t err);
 static err_t http_recv(void* arg, struct tcp_pcb* tpcb, struct pbuf* p, err_t err);
@@ -64,7 +68,7 @@ static const char* controller_state_text(p_state state) {
 
 static void snapshot_status(int* left, int* right, int* weapon, p_state* state, bool* failsafe, uint32_t* age_ms,
                             float* roll, float* pitch, float* yaw, bool* test_active, const char** test_motor,
-                            int* test_power, uint32_t* test_remaining_ms) {
+                            int* test_power, uint32_t* test_remaining_ms, uint8_t* temp_c, uint8_t* humidity) {
     const uint32_t now_ms = to_ms_since_boot(get_absolute_time());
     const IMUData imu = imu_get_data();
     web_motor_test_status_t test_status = {0};
@@ -84,6 +88,17 @@ static void snapshot_status(int* left, int* right, int* weapon, p_state* state, 
     *test_motor = test_status.motor_name;
     *test_power = test_status.power;
     *test_remaining_ms = test_status.remaining_ms;
+
+    // Poll DHT11 at most every 3 seconds
+    if ((now_ms - g_dht11_last_read_ms) >= DHT11_POLL_INTERVAL_MS) {
+        DHT11Data reading;
+        if (dht11_read(&reading)) {
+            g_dht11_data = reading;
+        }
+        g_dht11_last_read_ms = now_ms;
+    }
+    *temp_c = g_dht11_data.temperature;
+    *humidity = g_dht11_data.humidity;
 }
 
 static int clamp_response_len(int len, int max_len) {
@@ -154,12 +169,14 @@ static int generate_sse_frame(char* buffer, int max_len) {
     const char* test_motor = "none";
     int test_power = 0;
     uint32_t test_remaining_ms = 0;
+    uint8_t temp_c = 0;
+    uint8_t humidity = 0;
 
     snapshot_status(&left, &right, &weapon, &state, &failsafe, &age_ms, &roll, &pitch, &yaw,
-                    &test_active, &test_motor, &test_power, &test_remaining_ms);
+                    &test_active, &test_motor, &test_power, &test_remaining_ms, &temp_c, &humidity);
 
     return snprintf(buffer, max_len,
-                    "data: %s,%d,%d,%d,%d,%lu,%.1f,%.1f,%.1f,%d,%s,%d,%lu\n\n",
+                    "data: %s,%d,%d,%d,%d,%lu,%.1f,%.1f,%.1f,%d,%s,%d,%lu,%u,%u\n\n",
                     controller_state_text(state),
                     failsafe ? 1 : 0,
                     left,
@@ -172,7 +189,9 @@ static int generate_sse_frame(char* buffer, int max_len) {
                     test_active ? 1 : 0,
                     test_motor,
                     test_power,
-                    (unsigned long)test_remaining_ms);
+                    (unsigned long)test_remaining_ms,
+                    temp_c,
+                    humidity);
 }
 
 static int generate_404(char* buffer, int max_len) {
