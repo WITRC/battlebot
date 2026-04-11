@@ -19,6 +19,9 @@ set(CMAKE_CXX_STANDARD 17)
 # initialize the Raspberry Pi Pico SDK
 pico_sdk_init()
 
+# FatFS SD card library
+add_subdirectory(no-OS-FatFS/src build_fatfs)
+
 add_executable(${PROJECT_NAME}
         src/main.c
         src/bluetooth/my_platform.c
@@ -31,6 +34,9 @@ add_executable(${PROJECT_NAME}
         src/hardware/motor_omni.c
         src/hardware/motor_bi.c
         src/hardware/imu.c
+        src/hardware/sd_storage.c
+        src/hardware/dht11.c
+        src/hardware/hw_config.c
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
@@ -58,6 +64,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
         hardware_pwm
         hardware_adc
         bluepad32
+        no-OS-FatFS-SD-SDIO-SPI-RPi-Pico
 )
 
 add_subdirectory(${BLUEPAD32_ROOT}/src/components/bluepad32 libbluepad32)
