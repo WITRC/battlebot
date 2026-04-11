@@ -70,7 +70,7 @@
 // SAFETY SETTINGS
 // =============================================================================
 
-#define FAILSAFE_ENABLED    false
+#define FAILSAFE_ENABLED    true
 #define FAILSAFE_TIMEOUT_MS 2000    // Time without commands before triggering failsafe
 
 /*
