@@ -70,7 +70,7 @@
 // SAFETY SETTINGS
 // =============================================================================
 
-#define FAILSAFE_ENABLED    true
+#define FAILSAFE_ENABLED    false
 #define FAILSAFE_TIMEOUT_MS 2000    // Time without commands before triggering failsafe
 
 /*
@@ -152,6 +152,6 @@ This is the standard RC servo/ESC protocol (typically 1000–2000 µs range). No
 // DEBUG SETTINGS
 // =============================================================================
 
-#define SERIAL_LOGGING      true
+#define SERIAL_LOGGING      false
 
 #endif // CONFIG_H

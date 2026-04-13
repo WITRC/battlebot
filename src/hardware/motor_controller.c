@@ -69,6 +69,9 @@ void motor_controller_tank_drive(motor_controller_t* mc, int left, int right) {
 }
 
 void motor_controller_weapon(motor_controller_t* mc, int weapon) {
+    // FIXME: RAMPING
+    // set = off, update = on
+    // todo: change ramping curve on weapon
     motor_controller_update_motor((motor_t*)&mc->weapon, &mc->weapon_speed, weapon);
     update_command_time(mc);
 }
