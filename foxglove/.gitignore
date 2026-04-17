@@ -7,4 +7,3 @@ mcap/*
 tools/.venv/
 tools/__pycache__/
 tools/**/__pycache__/
-tools/uv.lock
